@@ -139,6 +139,84 @@
         </div>
     </div>
 
+    <!-- Share Modal -->
+    <div class="modal" id="shareModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Share Your Results</h2>
+                <button class="modal-close" id="shareClose">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="space-y-4">
+                    <p class="form-subtitle">Share your career path results with others:</p>
+                    <div class="share-buttons">
+                        <button type="button" class="share-button whatsapp" onclick="app.shareOnWhatsApp()">
+                            <i class="fab fa-whatsapp"></i> WhatsApp
+                        </button>
+                        <button type="button" class="share-button telegram" onclick="app.shareOnTelegram()">
+                            <i class="fab fa-telegram"></i> Telegram
+                        </button>
+                        <button type="button" class="share-button twitter" onclick="app.shareOnTwitter()">
+                            <i class="fab fa-twitter"></i> Twitter
+                        </button>
+                        <button type="button" class="share-button linkedin" onclick="app.shareOnLinkedIn()">
+                            <i class="fab fa-linkedin"></i> LinkedIn
+                        </button>
+                        <button type="button" class="share-button facebook" onclick="app.shareOnFacebook()">
+                            <i class="fab fa-facebook"></i> Facebook
+                        </button>
+                    </div>
+                    <div class="mt-4">
+                        <p class="form-label">Or copy link:</p>
+                        <div class="flex gap-2">
+                            <input type="text" id="shareableLink" class="form-input" readonly value="">
+                            <button type="button" class="btn btn-primary" onclick="app.copyShareLink()">Copy</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Support Modal -->
+    <div class="modal" id="supportModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Help & Support</h2>
+                <button class="modal-close" id="supportClose">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="space-y-4">
+                    <div class="form-group">
+                        <label class="form-label">Your Email*</label>
+                        <input type="email" id="supportEmail" class="form-input" placeholder="your@email.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">What do you need help with?*</label>
+                        <select id="supportType" class="form-input form-select" required>
+                            <option value="">Select an option</option>
+                            <option value="bug">Report a Bug</option>
+                            <option value="question">Ask a Question</option>
+                            <option value="suggestion">Feature Suggestion</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Message*</label>
+                        <textarea id="supportMessage" class="form-input form-textarea" rows="4" placeholder="Please describe the issue or your question in detail..." required></textarea>
+                    </div>
+                    <button type="button" class="btn btn-primary btn-full" onclick="app.submitSupportRequest()">
+                        Submit Request
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <header>
         <div class="container">
             <div class="header-content">
@@ -196,6 +274,37 @@
         </div>
     </main>
 
+    <!-- Features Section -->
+    <section class="features-section">
+        <div class="container">
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-route"></i>
+                    </div>
+                    <h3 class="feature-title">Multiple Career Paths</h3>
+                    <p class="feature-description">Get 3 personalized career options with detailed roadmaps for each.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h3 class="feature-title">Skill Gap Analysis</h3>
+                    <p class="feature-description">Identify missing skills and get recommendations to bridge those gaps.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-calendar-check"></i>
+                    </div>
+                    <h3 class="feature-title">Learning Schedule</h3>
+                    <p class="feature-description">Weekly plan with courses, projects, and milestones to track progress.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <footer>
         <div class="container">
             <div class="footer-content">
@@ -205,8 +314,12 @@
                 <div class="footer-links">
                     <a href="#" class="footer-link">Privacy Policy</a>
                     <a href="#" class="footer-link">Terms of Service</a>
-                    <a href="#" class="footer-link">Contact Us</a>
+                    <a href="#" class="footer-link" onclick="app.openSupportModal()">Contact Us</a>
+                    <a href="#" class="footer-link" onclick="app.openShareModal()">Share</a>
                 </div>
+            </div>
+            <div class="footer-bottom">
+                <p>Made by team Neurix | Powered by AI Technology</p>
             </div>
         </div>
     </footer>
