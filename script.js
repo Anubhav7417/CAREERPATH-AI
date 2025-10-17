@@ -51,6 +51,32 @@ const careerData = {
             { name: "Fast.ai", provider: "Free", type: "Course", duration: "Free", free: true, link: "https://www.fast.ai/" }
         ],
         companies: ["Google", "Microsoft", "Amazon", "IBM", "NVIDIA"]
+    },
+    "Cloud Architect": {
+        demand: "High",
+        growth: "25% by 2029",
+        skills: ["AWS", "Azure", "Google Cloud", "DevOps", "Networking", "Security"],
+        salary: "₹10-22 LPA",
+        trend: "Rapid cloud adoption across enterprises",
+        description: "Cloud Architects design and implement cloud solutions that are scalable, reliable, and secure for organizations.",
+        resources: [
+            { name: "AWS Certified Solutions Architect", provider: "AWS", type: "Certification", duration: "80 hours", free: false, link: "https://aws.amazon.com/certification/" },
+            { name: "Google Cloud Architecture", provider: "Google", type: "Course", duration: "40 hours", free: true, link: "https://cloud.google.com/training" }
+        ],
+        companies: ["Amazon", "Microsoft", "Google", "IBM", "Oracle"]
+    },
+    "DevOps Engineer": {
+        demand: "Very High",
+        growth: "28% by 2029",
+        skills: ["Docker", "Kubernetes", "CI/CD", "Linux", "Scripting", "Monitoring"],
+        salary: "₹8-18 LPA",
+        trend: "Increasing focus on automation and continuous delivery",
+        description: "DevOps Engineers bridge development and operations teams to improve collaboration and productivity through automation.",
+        resources: [
+            { name: "DevOps Bootcamp", provider: "Udemy", type: "Course", duration: "50 hours", free: false, link: "https://www.udemy.com/course/devopsbootcamp/" },
+            { name: "Kubernetes Tutorial", provider: "Kubernetes", type: "Tutorial", duration: "30 hours", free: true, link: "https://kubernetes.io/docs/tutorials/" }
+        ],
+        companies: ["Netflix", "Spotify", "Uber", "Airbnb", "Startups"]
     }
 };
 
@@ -626,12 +652,13 @@ class CareerPathAI {
         document.getElementById('googleLogin').addEventListener('click', () => this.handleGoogleLogin());
         document.getElementById('phoneLogin').addEventListener('click', () => this.showPhoneModal());
         
-        // Progress steps navigation
-        setTimeout(() => {
-            document.querySelectorAll('.progress-step').forEach((step, index) => {
-                step.addEventListener('click', () => this.goToStep(index + 1));
-            });
-        }, 100);
+        // Progress steps navigation - FIXED: Added proper event delegation
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('progress-step')) {
+                const step = parseInt(e.target.getAttribute('data-step'));
+                this.goToStep(step);
+            }
+        });
     }
 
     checkAuthStatus() {
@@ -942,7 +969,8 @@ class CareerPathAI {
         const progressFill = document.getElementById('progressFill');
         
         progressSteps.forEach((step, index) => {
-            step.classList.toggle('active', index < this.state.currentStep);
+            const stepNumber = parseInt(step.getAttribute('data-step'));
+            step.classList.toggle('active', stepNumber <= this.state.currentStep);
         });
         
         const progressPercentage = (this.state.currentStep / this.state.totalSteps) * 100;
@@ -1025,7 +1053,7 @@ class CareerPathAI {
                         </div>
                         
                         <div class="form-actions">
-                            <button class="btn btn-primary" onclick="app.validateStep1()">
+                            <button type="button" class="btn btn-primary" onclick="app.validateStep1()">
                                 Continue to Skills & Interests
                                 <i class="fas fa-arrow-right"></i>
                             </button>
@@ -1132,11 +1160,11 @@ class CareerPathAI {
                         ${this.state.errors.interests ? `<div class="error-message">${this.state.errors.interests}</div>` : ''}
                         
                         <div class="form-actions">
-                            <button class="btn btn-secondary" onclick="app.prevStep()">
+                            <button type="button" class="btn btn-secondary" onclick="app.prevStep()">
                                 <i class="fas fa-arrow-left"></i>
                                 Back
                             </button>
-                            <button class="btn btn-primary" onclick="app.validateStep2()">
+                            <button type="button" class="btn btn-primary" onclick="app.validateStep2()">
                                 Continue to Career Goals
                                 <i class="fas fa-arrow-right"></i>
                             </button>
@@ -1224,11 +1252,11 @@ class CareerPathAI {
                         </div>
                         
                         <div class="form-actions">
-                            <button class="btn btn-secondary" onclick="app.prevStep()">
+                            <button type="button" class="btn btn-secondary" onclick="app.prevStep()">
                                 <i class="fas fa-arrow-left"></i>
                                 Back
                             </button>
-                            <button class="btn btn-primary" onclick="app.validateStep3()">
+                            <button type="button" class="btn btn-primary" onclick="app.validateStep3()">
                                 Start AI Analysis
                                 <i class="fas fa-bolt"></i>
                             </button>
@@ -1326,11 +1354,11 @@ class CareerPathAI {
                 <div class="results-header">
                     <h2 class="results-title">Your Career Path Recommendations</h2>
                     <div class="results-actions">
-                        <button class="btn btn-outline" onclick="app.generatePDF()">
+                        <button type="button" class="btn btn-outline" onclick="app.generatePDF()">
                             <i class="fas fa-file-pdf"></i>
                             Export PDF
                         </button>
-                        <button class="btn btn-outline" onclick="app.restartProcess()">
+                        <button type="button" class="btn btn-outline" onclick="app.restartProcess()">
                             <i class="fas fa-redo"></i>
                             Start Over
                         </button>
@@ -1365,7 +1393,7 @@ class CareerPathAI {
                                 </div>
                             </div>
                             <div class="career-trend">${career.trend}</div>
-                            <button class="btn btn-primary career-action" onclick="app.showCareerDetails('${career.name}')">
+                            <button type="button" class="btn btn-primary career-action" onclick="app.showCareerDetails('${career.name}')">
                                 View Details
                             </button>
                         </div>
