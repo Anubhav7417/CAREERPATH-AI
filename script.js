@@ -1,5 +1,39 @@
-// Career data
-const careerData = {
+// Application State
+const state = {
+    currentStep: 1,
+    totalSteps: 4,
+    userData: {
+        name: '',
+        email: '',
+        skills: '',
+        experience: '',
+        employmentStatus: '',
+        interests: [],
+        goals: '',
+        constraints: '',
+        salaryRange: ''
+    },
+    results: null,
+    acceptedTerms: false,
+    topCareers: [],
+    errors: {},
+    apiSource: null,
+    currentCareerIndex: 0,
+    currentModalStep: 4,
+    currentCareer: null
+};
+
+// DOM Elements
+const app = document.getElementById('app');
+const careerModal = document.getElementById('careerModal');
+const modalTitle = document.getElementById('modalTitle');
+const modalContent = document.getElementById('modalContent');
+const shareModal = document.getElementById('shareModal');
+const supportModal = document.getElementById('supportModal');
+const themeToggle = document.getElementById('themeToggle');
+
+// Career trends data
+const careerTrends = {
     "Full Stack Developer": {
         demand: "High",
         growth: "22% by 2029",
@@ -9,9 +43,14 @@ const careerData = {
         description: "Full Stack Developers build both the front-end and back-end of web applications. They work with various technologies to create seamless user experiences and robust server-side functionality.",
         resources: [
             { name: "FreeCodeCamp", provider: "Free", type: "Course", duration: "300 hours", free: true, link: "https://www.freecodecamp.org/" },
-            { name: "The Complete Web Developer Bootcamp", provider: "Udemy", type: "Course", duration: "60 hours", free: false, link: "https://www.udemy.com/course/the-complete-web-development-bootcamp/" }
+            { name: "The Complete Web Developer Bootcamp", provider: "Udemy", type: "Course", duration: "60 hours", free: false, link: "https://www.udemy.com/course/the-complete-web-development-bootcamp/" },
+            { name: "Full Stack Open", provider: "University of Helsinki", type: "Course", duration: "Free", free: true, link: "https://fullstackopen.com/en/" },
+            { name: "JavaScript: The Advanced Concepts", provider: "ZeroToMastery", type: "Course", duration: "25 hours", free: false, link: "https://www.udemy.com/course/advanced-javascript-concepts/" }
         ],
-        companies: ["Infosys", "TCS", "Wipro", "HCL", "Startups"]
+        companies: ["Infosys", "TCS", "Wipro", "HCL", "Startups"],
+        learningPath: "Start with HTML/CSS and JavaScript, then learn a frontend framework like React, followed by backend technologies like Node.js and databases.",
+        freelancing: true,
+        freelancingPlatforms: ["Upwork", "Freelancer", "Fiverr", "Toptal"]
     },
     "Data Scientist": {
         demand: "Very High",
@@ -22,9 +61,14 @@ const careerData = {
         description: "Data Scientists analyze and interpret complex data to help organizations make informed decisions. They use statistical methods, machine learning, and data visualization techniques.",
         resources: [
             { name: "Kaggle Learn", provider: "Free", type: "Courses", duration: "Free", free: true, link: "https://www.kaggle.com/learn" },
-            { name: "Data Science Specialization", provider: "Coursera", type: "Specialization", duration: "11 months", free: false, link: "https://www.coursera.org/specializations/jhu-data-science" }
+            { name: "Data Science Specialization", provider: "Coursera", type: "Specialization", duration: "11 months", free: false, link: "https://www.coursera.org/specializations/jhu-data-science" },
+            { name: "Python for Data Science and Machine Learning", provider: "Udemy", type: "Course", duration: "44 hours", free: false, link: "https://www.udemy.com/course/python-for-data-science-and-machine-learning-bootcamp/" },
+            { name: "Introduction to Machine Learning", provider: "Kaggle", type: "Course", duration: "Free", free: true, link: "https://www.kaggle.com/learn/intro-to-machine-learning" }
         ],
-        companies: ["Google", "Microsoft", "Amazon", "IBM", "JPMorgan Chase"]
+        companies: ["Google", "Microsoft", "Amazon", "IBM", "JPMorgan Chase"],
+        learningPath: "Start with Python programming, then learn statistics and data analysis, followed by machine learning algorithms and data visualization.",
+        freelancing: true,
+        freelancingPlatforms: ["Upwork", "Toptal", "Kaggle"]
     },
     "UX/UI Designer": {
         demand: "High",
@@ -35,1716 +79,1632 @@ const careerData = {
         description: "UX/UI Designers create user-friendly interfaces that provide meaningful and relevant experiences to users. They combine design, psychology, and business needs.",
         resources: [
             { name: "Figma Tutorials", provider: "Figma", type: "Tutorials", duration: "Free", free: true, link: "https://www.figma.com/resources/learn/" },
-            { name: "UI/UX Design Specialization", provider: "Coursera", type: "Specialization", duration: "6 months", free: false, link: "https://www.coursera.org/specializations/ui-ux-design" }
+            { name: "UI/UX Design Specialization", provider: "Coursera", type: "Specialization", duration: "6 months", free: false, link: "https://www.coursera.org/specializations/ui-ux-design" },
+            { name: "Learn Figma - UI/UX Design Essential Training", provider: "Udemy", type: "Course", duration: "12 hours", free: false, link: "https://www.udemy.com/course/learn-figma/" },
+            { name: "Google UX Design Certificate", provider: "Coursera", type: "Certificate", duration: "6 months", free: false, link: "https://www.coursera.org/professional-certificates/google-ux-design" }
         ],
-        companies: ["Apple", "Google", "Adobe", "Airbnb", "Facebook"]
+        companies: ["Apple", "Google", "Adobe", "Airbnb", "Facebook"],
+        learningPath: "Start with design principles and color theory, then learn wireframing and prototyping tools, followed by user research methodologies.",
+        freelancing: true,
+        freelancingPlatforms: ["Dribbble", "Behance", "Upwork", "99designs"]
     },
-    "AI Engineer": {
+    "Cloud Engineer": {
         demand: "Very High",
-        growth: "35% by 2029",
-        skills: ["Python", "TensorFlow", "PyTorch", "Machine Learning", "Deep Learning", "NLP", "Computer Vision"],
-        salary: "₹12-25 LPA",
-        trend: "Explosive growth in AI adoption across all industries",
-        description: "AI Engineers develop and deploy artificial intelligence systems and machine learning models to solve complex business problems.",
+        growth: "26% by 2029",
+        skills: ["AWS", "Azure", "Docker", "Kubernetes", "Infrastructure as Code", "Linux", "Networking"],
+        salary: "₹7-18 LPA",
+        trend: "Accelerated cloud adoption across all business sectors",
+        description: "Cloud Engineers design, implement, and maintain cloud infrastructure and services. They help organizations leverage cloud computing for scalability and efficiency.",
         resources: [
-            { name: "Machine Learning by Andrew Ng", provider: "Coursera", type: "Course", duration: "11 weeks", free: false, link: "https://www.coursera.org/learn/machine-learning" },
-            { name: "Fast.ai", provider: "Free", type: "Course", duration: "Free", free: true, link: "https://www.fast.ai/" }
+            { name: "AWS Free Tier", provider: "Amazon", type: "Hands-on", duration: "Free", free: true, link: "https://aws.amazon.com/free/" },
+            { name: "AWS Certified Solutions Architect", provider: "A Cloud Guru", type: "Course", duration: "40 hours", free: false, link: "https://acloudguru.com/course/aws-certified-solutions-architect-associate-saa-c03" },
+            { name: "Docker and Kubernetes: The Complete Guide", provider: "Udemy", type: "Course", duration: "23 hours", free: false, link: "https://www.udemy.com/course/docker-and-kubernetes-the-complete-guide/" },
+            { name: "Google Cloud Platform Fundamentals", provider: "Coursera", type: "Course", duration: "15 hours", free: false, link: "https://www.coursera.org/learn/gcp-fundamentals" }
         ],
-        companies: ["Google", "Microsoft", "Amazon", "IBM", "NVIDIA"]
-    },
-    "Cloud Architect": {
-        demand: "High",
-        growth: "25% by 2029",
-        skills: ["AWS", "Azure", "Google Cloud", "DevOps", "Networking", "Security"],
-        salary: "₹10-22 LPA",
-        trend: "Rapid cloud adoption across enterprises",
-        description: "Cloud Architects design and implement cloud solutions that are scalable, reliable, and secure for organizations.",
-        resources: [
-            { name: "AWS Certified Solutions Architect", provider: "AWS", type: "Certification", duration: "80 hours", free: false, link: "https://aws.amazon.com/certification/" },
-            { name: "Google Cloud Architecture", provider: "Google", type: "Course", duration: "40 hours", free: true, link: "https://cloud.google.com/training" }
-        ],
-        companies: ["Amazon", "Microsoft", "Google", "IBM", "Oracle"]
+        companies: ["Amazon", "Microsoft", "Google", "IBM", "Netflix"],
+        learningPath: "Start with cloud fundamentals and Linux, then learn a specific cloud platform (AWS/Azure/GCP), followed by containerization and orchestration tools.",
+        freelancing: false,
+        freelancingPlatforms: []
     },
     "DevOps Engineer": {
-        demand: "Very High",
-        growth: "28% by 2029",
-        skills: ["Docker", "Kubernetes", "CI/CD", "Linux", "Scripting", "Monitoring"],
-        salary: "₹8-18 LPA",
-        trend: "Increasing focus on automation and continuous delivery",
-        description: "DevOps Engineers bridge development and operations teams to improve collaboration and productivity through automation.",
+        demand: "High",
+        growth: "21% by 2029",
+        skills: ["CI/CD", "Docker", "Kubernetes", "AWS", "Scripting", "Jenkins", "Monitoring"],
+        salary: "₹7-16 LPA",
+        trend: "Increasing focus on automation and deployment efficiency",
+        description: "DevOps Engineers bridge the gap between development and operations teams. They automate processes and ensure reliable software delivery.",
         resources: [
-            { name: "DevOps Bootcamp", provider: "Udemy", type: "Course", duration: "50 hours", free: false, link: "https://www.udemy.com/course/devopsbootcamp/" },
-            { name: "Kubernetes Tutorial", provider: "Kubernetes", type: "Tutorial", duration: "30 hours", free: true, link: "https://kubernetes.io/docs/tutorials/" }
+            { name: "DevOps Bootcamp", provider: "Udemy", type: "Course", duration: "55 hours", free: false, link: "https://www.udemy.com/course/devops-bootcamp/" },
+            { name: "Kubernetes for Absolute Beginners", provider: "YouTube", type: "Course", duration: "4 hours", free: true, link: "https://www.youtube.com/watch?v=7XDeI5fyj2w" },
+            { name: "Introduction to DevOps", provider: "Coursera", type: "Course", duration: "10 hours", free: true, link: "https://www.coursera.org/learn/intro-to-devops" },
+            { name: "GitLab CI/CD Tutorial", provider: "GitLab", type: "Tutorial", duration: "Free", free: true, link: "https://docs.gitlab.com/ee/ci/" }
         ],
-        companies: ["Netflix", "Spotify", "Uber", "Airbnb", "Startups"]
+        companies: ["Netflix", "Amazon", "Google", "Etsy", "Target"],
+        learningPath: "Start with Linux and scripting, then learn CI/CD tools and containerization, followed by infrastructure as code and monitoring solutions.",
+        freelancing: true,
+        freelancingPlatforms: ["Upwork", "Toptal", "Freelancer"]
+    },
+    "Digital Marketer": {
+        demand: "High",
+        growth: "10% by 2029",
+        skills: ["SEO", "SEM", "Social Media", "Content Marketing", "Google Analytics", "Email Marketing"],
+        salary: "₹3-8 LPA",
+        trend: "Growing digital presence for businesses across industries",
+        description: "Digital Marketers promote products and services through digital channels. They analyze market trends and create strategies to reach target audiences.",
+        resources: [
+            { name: "Google Digital Garage", provider: "Google", type: "Course", duration: "40 hours", free: true, link: "https://learndigital.withgoogle.com/digitalgarage/" },
+            { name: "HubSpot Academy", provider: "HubSpot", type: "Courses", duration: "Free", free: true, link: "https://academy.hubspot.com/" },
+            { name: "Digital Marketing Specialization", provider: "Coursera", type: "Specialization", duration: "6 months", free: false, link: "https://www.coursera.org/specializations/digital-marketing" },
+            { name: "Facebook Blueprint", provider: "Facebook", type: "Certification", duration: "Free", free: true, link: "https://www.facebook.com/business/learn" }
+        ],
+        companies: ["Any industry with online presence", "Startups", "E-commerce", "Agencies"],
+        learningPath: "Start with fundamentals of marketing, then learn SEO and SEM, followed by social media marketing and analytics.",
+        freelancing: true,
+        freelancingPlatforms: ["Upwork", "Fiverr", "PeoplePerHour"]
+    },
+    "Cybersecurity Analyst": {
+        demand: "Very High",
+        growth: "33% by 2030",
+        skills: ["Network Security", "Ethical Hacking", "SIEM", "Incident Response", "Risk Assessment", "Cryptography"],
+        salary: "₹8-18 LPA",
+        trend: "Growing need for security professionals due to increasing cyber threats",
+        description: "Cybersecurity Analysts protect organizations from cyber threats by monitoring systems, investigating incidents, and implementing security measures.",
+        resources: [
+            { name: "Cybersecurity Specialization", provider: "Coursera", type: "Specialization", duration: "8 months", free: false, link: "https://www.coursera.org/specializations/cyber-security" },
+            { name: "CompTIA Security+", provider: "CompTIA", type: "Certification", duration: "60 hours", free: false, link: "https://www.comptia.org/certifications/security" },
+            { name: "Introduction to Cybersecurity", provider: "Cisco", type: "Course", duration: "Free", free: true, link: "https://www.netacad.com/courses/cybersecurity/introduction-cybersecurity" },
+            { name: "Ethical Hacking", provider: "Udemy", type: "Course", duration: "15 hours", free: false, link: "https://www.udemy.com/course/learn-ethical-hacking-from-scratch/" }
+        ],
+        companies: ["IBM", "Deloitte", "EY", "Accenture", "Wipro", "TCS"],
+        learningPath: "Start with networking fundamentals, then learn security concepts, followed by specialized areas like ethical hacking and incident response.",
+        freelancing: true,
+        freelancingPlatforms: ["Upwork", "Freelancer", "HackerOne"]
+    },
+    "AI/ML Engineer": {
+        demand: "Very High",
+        growth: "40% by 2029",
+        skills: ["Python", "Machine Learning", "Deep Learning", "TensorFlow", "PyTorch", "Natural Language Processing", "Computer Vision"],
+        salary: "₹10-25 LPA",
+        trend: "Rapid growth in AI applications across industries",
+        description: "AI/ML Engineers develop and deploy machine learning models to solve complex problems and create intelligent systems.",
+        resources: [
+            { name: "Machine Learning Specialization", provider: "Coursera", type: "Specialization", duration: "6 months", free: false, link: "https://www.coursera.org/specializations/machine-learning-introduction" },
+            { name: "Deep Learning Specialization", provider: "Coursera", type: "Specialization", duration: "5 months", free: false, link: "https://www.coursera.org/specializations/deep-learning" },
+            { name: "Fast.ai Practical Deep Learning", provider: "Fast.ai", type: "Course", duration: "Free", free: true, link: "https://course.fast.ai/" },
+            { name: "TensorFlow Developer Certificate", provider: "Google", type: "Certification", duration: "3 months", free: false, link: "https://www.tensorflow.org/certificate" }
+        ],
+        companies: ["Google", "Microsoft", "Amazon", "NVIDIA", "OpenAI", "IBM"],
+        learningPath: "Start with Python programming and mathematics, then learn machine learning fundamentals, followed by deep learning and specialized AI domains.",
+        freelancing: true,
+        freelancingPlatforms: ["Upwork", "Toptal", "Kaggle"]
+    },
+    "Front-End Developer": {
+        demand: "High",
+        growth: "15% by 2029",
+        skills: ["HTML", "CSS", "JavaScript", "React", "Vue", "Angular", "Responsive Design"],
+        salary: "₹3-6 LPA",
+        trend: "Increased focus on component-based architectures and serverless front-end development",
+        description: "Front-End Developers are responsible for building the user interface and user experience of websites and web applications.",
+        resources: [
+            { name: "Frontend Development Libraries", provider: "FreeCodeCamp", type: "Course", duration: "300 hours", free: true, link: "https://www.freecodecamp.org/learn/front-end-development-libraries/" },
+            { name: "Modern React with Redux", provider: "Udemy", type: "Course", duration: "52 hours", free: false, link: "https://www.udemy.com/course/react-redux/" },
+            { name: "JavaScript Algorithms and Data Structures", provider: "FreeCodeCamp", type: "Course", duration: "300 hours", free: true, link: "https://www.freecodecamp.org/learn/javascript-algorithms-and-data-structures/" },
+            { name: "Advanced CSS and Sass", provider: "Udemy", type: "Course", duration: "28 hours", free: false, link: "https://www.udemy.com/course/advanced-css-and-sass/" }
+        ],
+        companies: ["Infosys", "TCS", "Wipro", "HCL", "Startups"],
+        learningPath: "Start with HTML/CSS and JavaScript, then learn a frontend framework like React, followed by state management and responsive design.",
+        freelancing: true,
+        freelancingPlatforms: ["Upwork", "Freelancer", "Fiverr"]
+    },
+    "Junior Security Analyst": {
+        demand: "High",
+        growth: "33% by 2030",
+        skills: ["Network Security", "SIEM Tools", "Incident Response", "Vulnerability Assessment", "Security Policies"],
+        salary: "₹2.4-3.5 LPA",
+        trend: "Increased focus on proactive threat hunting and incident response due to rising ransomware attacks",
+        description: "Junior Security Analysts assist in protecting an organization's systems and data from cyber threats under the guidance of senior analysts.",
+        resources: [
+            { name: "Introduction to Cybersecurity", provider: "Cisco", type: "Course", duration: "30 hours", free: true, link: "https://www.netacad.com/courses/cybersecurity/introduction-cybersecurity" },
+            { name: "Cybersecurity Fundamentals", provider: "IBM", type: "Specialization", duration: "3 months", free: false, link: "https://www.coursera.org/specializations/cyber-security-fundamentals" },
+            { name: "CompTIA Security+ (SY0-701) Complete Course", provider: "Udemy", type: "Course", duration: "25 hours", free: false, link: "https://www.udemy.com/course/comptia-security-sy0-701-complete-course-exam-prep" },
+            { name: "Cybersecurity Essentials", provider: "TryHackMe", type: "Learning Path", duration: "40 hours", free: true, link: "https://tryhackme.com/path/outline/cybersecurity" }
+        ],
+        companies: ["Wipro", "TCS", "Infosys", "HCL Technologies", "Accenture"],
+        learningPath: "Start with networking fundamentals and basic security concepts. Then learn about security tools and technologies. Get hands-on with security monitoring and incident response.",
+        freelancing: true,
+        freelancingPlatforms: ["Upwork", "Freelancer", "HackerOne"]
     }
 };
 
-// Career API Integration
-class CareerAPI {
-    constructor() {
-        this.baseURL = 'https://api.careerpath.ai/v1';
-        this.cache = new Map();
-    }
-
-    async getCareerInsights(skills, interests) {
-        const cacheKey = `insights-${skills.join(',')}-${interests.join(',')}`;
-        
-        if (this.cache.has(cacheKey)) {
-            return this.cache.get(cacheKey);
-        }
-
-        // Simulate API call
-        return new Promise((resolve) => {
-            setTimeout(() => {
-                const insights = this.generateMockInsights(skills, interests);
-                this.cache.set(cacheKey, insights);
-                resolve(insights);
-            }, 1000);
-        });
-    }
-
-    async getMarketTrends(careerField) {
-        const trends = {
-            'Full Stack Developer': {
-                demand: 'very_high',
-                remote_opportunities: 65,
-                average_salary: 1200000,
-                growth_rate: 22
-            },
-            'Data Scientist': {
-                demand: 'very_high',
-                remote_opportunities: 70,
-                average_salary: 1400000,
-                growth_rate: 31
-            },
-            'UX/UI Designer': {
-                demand: 'high',
-                remote_opportunities: 60,
-                average_salary: 900000,
-                growth_rate: 13
-            }
-        };
-
-        return trends[careerField] || trends['Full Stack Developer'];
-    }
-
-    async getLearningResources(skill, level = 'beginner') {
-        const resources = {
-            'JavaScript': [
-                {
-                    name: "JavaScript Modern Tutorial",
-                    provider: "javascript.info",
-                    free: true,
-                    rating: 4.8,
-                    duration: "40 hours"
-                }
-            ],
-            'Python': [
-                {
-                    name: "Python for Everybody",
-                    provider: "Coursera",
-                    free: true,
-                    rating: 4.7,
-                    duration: "60 hours"
-                }
-            ],
-            'React': [
-                {
-                    name: "React Official Tutorial",
-                    provider: "React.js",
-                    free: true,
-                    rating: 4.9,
-                    duration: "30 hours"
-                }
-            ]
-        };
-
-        return resources[skill] || [];
-    }
-
-    generateMockInsights(skills, interests) {
-        return {
-            high_demand_skills: this.identifyHighDemandSkills(skills),
-            skill_gaps: this.identifySkillGaps(skills),
-            emerging_trends: this.getEmergingTrends(interests),
-            salary_insights: this.generateSalaryInsights(skills),
-            learning_recommendations: this.generateLearningRecommendations(skills)
-        };
-    }
-
-    identifyHighDemandSkills(skills) {
-        const highDemandSkills = ['JavaScript', 'Python', 'React', 'AWS', 'Machine Learning'];
-        return skills.filter(skill => 
-            highDemandSkills.some(hds => 
-                skill.toLowerCase().includes(hds.toLowerCase())
-            )
-        );
-    }
-
-    identifySkillGaps(skills) {
-        const criticalSkills = ['Git', 'SQL', 'Problem Solving', 'Communication'];
-        return criticalSkills.filter(skill => 
-            !skills.some(s => s.toLowerCase().includes(skill.toLowerCase()))
-        );
-    }
-
-    getEmergingTrends(interests) {
-        const trends = {
-            'AI/ML Engineering': 'AI adoption growing at 45% annually',
-            'Cloud Computing': 'Multi-cloud strategies becoming standard',
-            'Data Science': 'Real-time analytics demand increasing',
-            'UX/UI Design': 'AR/VR interfaces gaining traction'
-        };
-
-        return interests.map(interest => trends[interest] || 'Stable growth expected');
-    }
-
-    generateSalaryInsights(skills) {
-        const skillValues = {
-            'JavaScript': 15,
-            'Python': 20,
-            'React': 18,
-            'AWS': 25,
-            'Machine Learning': 30
-        };
-
-        const totalValue = skills.reduce((sum, skill) => {
-            const value = Object.entries(skillValues).find(([key]) => 
-                skill.toLowerCase().includes(key.toLowerCase())
-            );
-            return sum + (value ? value[1] : 5);
-        }, 0);
-
-        const baseSalary = 600000;
-        const bonus = totalValue * 10000;
-
-        return {
-            estimated_salary: baseSalary + bonus,
-            market_premium: bonus,
-            percentile: Math.min(90, 50 + totalValue)
-        };
-    }
-
-    generateLearningRecommendations(skills) {
-        const recommendations = [];
-        
-        if (!skills.some(s => s.toLowerCase().includes('git'))) {
-            recommendations.push('Learn Git version control');
-        }
-        
-        if (!skills.some(s => s.toLowerCase().includes('cloud'))) {
-            recommendations.push('Explore cloud computing (AWS/Azure/GCP)');
-        }
-
-        return recommendations.slice(0, 3);
-    }
-
-    // Real-time job market data
-    async getLiveJobData(careerField, location = 'india') {
-        // Simulate real-time data
-        return {
-            active_jobs: Math.floor(Math.random() * 5000) + 1000,
-            average_response_time: '3.2 days',
-            remote_ratio: Math.floor(Math.random() * 40) + 30,
-            top_companies: ['TCS', 'Infosys', 'Wipro', 'HCL', 'Startups']
-        };
-    }
-}
-
-// GCT Career Advice Module
-class GCTCareerAdvice {
-    constructor() {
-        this.adviceData = {
-            assessments: [],
-            recommendations: [],
-            progress: {}
-        };
-    }
-
-    // Career assessment based on skills and interests
-    assessCareerFit(skills, interests, experience) {
-        const assessment = {
-            technicalScore: this.calculateTechnicalScore(skills),
-            interestAlignment: this.calculateInterestAlignment(interests),
-            experienceLevel: this.mapExperienceLevel(experience),
-            recommendedPaths: [],
-            skillGaps: []
-        };
-
-        // Calculate career fit scores
-        assessment.recommendedPaths = this.generateCareerRecommendations(assessment);
-        assessment.skillGaps = this.identifySkillGaps(skills, assessment.recommendedPaths[0]);
-
-        return assessment;
-    }
-
-    calculateTechnicalScore(skills) {
-        const technicalSkills = ['JavaScript', 'Python', 'Java', 'React', 'Node.js', 'SQL', 'AWS', 'Machine Learning'];
-        const userSkills = skills.toLowerCase().split(',').map(s => s.trim());
-        
-        const matchedSkills = technicalSkills.filter(skill => 
-            userSkills.some(userSkill => userSkill.includes(skill.toLowerCase()))
-        );
-        
-        return Math.round((matchedSkills.length / technicalSkills.length) * 100);
-    }
-
-    calculateInterestAlignment(interests) {
-        const careerInterests = {
-            'Software Development': ['Software Development', 'AI/ML Engineering', 'DevOps'],
-            'Data Science': ['Data Science', 'AI/ML Engineering', 'Cloud Computing'],
-            'Design': ['UI/UX Design', 'Graphic Design'],
-            'Business': ['Business Management', 'Finance', 'Sales', 'Digital Marketing']
-        };
-
-        let maxAlignment = 0;
-        
-        Object.values(careerInterests).forEach(careerInterestGroup => {
-            const alignment = interests.filter(interest => 
-                careerInterestGroup.includes(interest)
-            ).length;
-            
-            maxAlignment = Math.max(maxAlignment, alignment);
-        });
-
-        return Math.round((maxAlignment / Math.max(interests.length, 1)) * 100);
-    }
-
-    mapExperienceLevel(experience) {
-        const levels = {
-            '0': 'Entry Level',
-            '0-1': 'Junior',
-            '1-3': 'Mid Level',
-            '3-5': 'Senior',
-            '5-10': 'Expert',
-            '10+': 'Leadership'
-        };
-        
-        return levels[experience] || 'Entry Level';
-    }
-
-    generateCareerRecommendations(assessment) {
-        const recommendations = [];
-        
-        if (assessment.technicalScore >= 70 && assessment.interestAlignment >= 70) {
-            recommendations.push({
-                career: 'Full Stack Developer',
-                confidence: 85,
-                timeline: '3-6 months',
-                salary: '₹6-15 LPA'
-            });
-        }
-        
-        if (assessment.technicalScore >= 60) {
-            recommendations.push({
-                career: 'Data Scientist',
-                confidence: 75,
-                timeline: '6-12 months',
-                salary: '₹8-20 LPA'
-            });
-        }
-        
-        if (assessment.interestAlignment >= 80) {
-            recommendations.push({
-                career: 'UX/UI Designer',
-                confidence: 70,
-                timeline: '4-8 months',
-                salary: '₹5-12 LPA'
-            });
-        }
-
-        return recommendations.sort((a, b) => b.confidence - a.confidence);
-    }
-
-    identifySkillGaps(skills, recommendedCareer) {
-        const careerSkillRequirements = {
-            'Full Stack Developer': ['JavaScript', 'React', 'Node.js', 'HTML/CSS', 'SQL', 'Git'],
-            'Data Scientist': ['Python', 'Statistics', 'Machine Learning', 'SQL', 'Data Visualization'],
-            'UX/UI Designer': ['Figma', 'User Research', 'Wireframing', 'Prototyping', 'UI Design']
-        };
-
-        const userSkills = skills.toLowerCase().split(',').map(s => s.trim());
-        const requiredSkills = careerSkillRequirements[recommendedCareer.career] || [];
-        
-        return requiredSkills.filter(skill => 
-            !userSkills.some(userSkill => userSkill.includes(skill.toLowerCase()))
-        );
-    }
-
-    // Generate learning path
-    generateLearningPath(career, skillGaps, timeline) {
-        const learningPaths = {
-            'Full Stack Developer': {
-                phases: [
-                    {
-                        title: 'Frontend Fundamentals',
-                        duration: '6 weeks',
-                        skills: ['HTML', 'CSS', 'JavaScript'],
-                        resources: [
-                            'FreeCodeCamp Responsive Web Design',
-                            'JavaScript30 Course',
-                            'MDN Web Docs'
-                        ]
-                    },
-                    {
-                        title: 'React Development',
-                        duration: '8 weeks',
-                        skills: ['React', 'State Management', 'Component Architecture'],
-                        resources: [
-                            'React Official Tutorial',
-                            'Fullstack Open Course',
-                            'React Patterns'
-                        ]
-                    },
-                    {
-                        title: 'Backend & Databases',
-                        duration: '6 weeks',
-                        skills: ['Node.js', 'Express', 'MongoDB', 'SQL'],
-                        resources: [
-                            'Node.js Official Docs',
-                            'MongoDB University',
-                            'SQL Bolt'
-                        ]
-                    }
-                ]
-            },
-            'Data Scientist': {
-                phases: [
-                    {
-                        title: 'Python & Data Analysis',
-                        duration: '8 weeks',
-                        skills: ['Python', 'Pandas', 'NumPy', 'Data Cleaning'],
-                        resources: [
-                            'Python for Everybody',
-                            'Kaggle Python Course',
-                            'Real Python Tutorials'
-                        ]
-                    },
-                    {
-                        title: 'Statistics & Machine Learning',
-                        duration: '10 weeks',
-                        skills: ['Statistics', 'ML Algorithms', 'Model Evaluation'],
-                        resources: [
-                            'StatQuest YouTube Channel',
-                            'Machine Learning Coursera',
-                            'Fast.ai Course'
-                        ]
-                    }
-                ]
-            }
-        };
-
-        return learningPaths[career] || learningPaths['Full Stack Developer'];
-    }
-
-    // Career progression tracker
-    trackProgress(userId, milestones) {
-        const progress = {
-            userId: userId,
-            completedMilestones: [],
-            currentPhase: 0,
-            overallProgress: 0,
-            lastUpdated: new Date().toISOString()
-        };
-
-        // Calculate progress based on completed milestones
-        if (milestones && milestones.length > 0) {
-            const completed = milestones.filter(m => m.completed).length;
-            progress.overallProgress = Math.round((completed / milestones.length) * 100);
-            progress.completedMilestones = milestones.filter(m => m.completed);
-        }
-
-        return progress;
-    }
-
-    // Get personalized advice
-    getPersonalizedAdvice(assessment, goals) {
-        const advice = {
-            shortTerm: [],
-            longTerm: [],
-            warnings: [],
-            opportunities: []
-        };
-
-        // Short-term advice based on current assessment
-        if (assessment.technicalScore < 50) {
-            advice.shortTerm.push('Focus on building fundamental technical skills through online courses and practice projects.');
-        }
-
-        if (assessment.interestAlignment < 60) {
-            advice.shortTerm.push('Explore different career paths through internships or volunteer work to better align with your interests.');
-        }
-
-        // Long-term advice based on goals
-        if (goals.includes('leadership')) {
-            advice.longTerm.push('Develop soft skills and consider management training programs for future leadership roles.');
-        }
-
-        if (goals.includes('remote work')) {
-            advice.opportunities.push('Remote work opportunities are abundant in tech roles. Build a strong online portfolio.');
-        }
-
-        return advice;
-    }
-}
-
-// Particle System for CareerPath AI
-class ParticleSystem {
-    constructor() {
-        this.particles = [];
-        this.canvas = document.getElementById('particles-js');
-        if (!this.canvas) return;
-        
-        this.ctx = this.canvas.getContext('2d');
-        this.mouse = { x: 0, y: 0, radius: 100 };
-        
-        this.init();
-    }
-
-    init() {
-        this.resizeCanvas();
-        this.createParticles();
-        this.animate();
-        this.setupEventListeners();
-    }
-
-    resizeCanvas() {
-        this.canvas.width = window.innerWidth;
-        this.canvas.height = window.innerHeight;
-    }
-
-    createParticles() {
-        const particleCount = Math.min(80, Math.floor(window.innerWidth / 15));
-        
-        for (let i = 0; i < particleCount; i++) {
-            this.particles.push({
-                x: Math.random() * this.canvas.width,
-                y: Math.random() * this.canvas.height,
-                size: Math.random() * 3 + 1,
-                speedX: Math.random() * 1 - 0.5,
-                speedY: Math.random() * 1 - 0.5,
-                color: this.getRandomColor(),
-                opacity: Math.random() * 0.5 + 0.2
-            });
-        }
-    }
-
-    getRandomColor() {
-        const colors = ['#2563eb', '#1d4ed8', '#f59e0b', '#10b981', '#ef4444'];
-        return colors[Math.floor(Math.random() * colors.length)];
-    }
-
-    animate() {
-        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-        
-        for (let i = 0; i < this.particles.length; i++) {
-            const p = this.particles[i];
-            
-            // Update position
-            p.x += p.speedX;
-            p.y += p.speedY;
-            
-            // Bounce off walls
-            if (p.x < 0 || p.x > this.canvas.width) p.speedX *= -1;
-            if (p.y < 0 || p.y > this.canvas.height) p.speedY *= -1;
-            
-            // Draw particle
-            this.ctx.beginPath();
-            this.ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-            this.ctx.fillStyle = p.color;
-            this.ctx.globalAlpha = p.opacity;
-            this.ctx.fill();
-            
-            // Draw connections
-            for (let j = i + 1; j < this.particles.length; j++) {
-                const p2 = this.particles[j];
-                const distance = Math.sqrt(
-                    Math.pow(p.x - p2.x, 2) + Math.pow(p.y - p2.y, 2)
-                );
-                
-                if (distance < 100) {
-                    this.ctx.beginPath();
-                    this.ctx.strokeStyle = p.color;
-                    this.ctx.globalAlpha = 0.2 * (1 - distance / 100);
-                    this.ctx.lineWidth = 0.5;
-                    this.ctx.moveTo(p.x, p.y);
-                    this.ctx.lineTo(p2.x, p2.y);
-                    this.ctx.stroke();
-                }
-            }
-        }
-        
-        requestAnimationFrame(() => this.animate());
-    }
-
-    setupEventListeners() {
-        window.addEventListener('resize', () => this.resizeCanvas());
-        
-        this.canvas.addEventListener('mousemove', (e) => {
-            this.mouse.x = e.x;
-            this.mouse.y = e.y;
-        });
-    }
-}
-
-// Advanced CareerPath AI Application with Authentication
-class CareerPathAI {
-    constructor() {
-        this.state = {
-            currentStep: 1,
-            totalSteps: 5,
-            userData: {
-                name: '',
-                email: '',
-                skills: '',
-                experience: '',
-                employmentStatus: '',
-                interests: [],
-                goals: '',
-                constraints: '',
-                salaryRange: '',
-                education: '',
-                location: ''
-            },
-            topCareers: [],
-            errors: {},
-            isAuthenticated: false,
-            currentUser: null
-        };
-
-        this.careerAPI = new CareerAPI();
-        this.gctCareerAdvice = new GCTCareerAdvice();
-        this.init();
-    }
-
-    init() {
-        this.setupEventListeners();
-        this.checkAuthStatus();
-        this.render();
-        new ParticleSystem();
-    }
-
-    setupEventListeners() {
-        // Theme toggle
-        document.getElementById('themeToggle').addEventListener('click', () => this.toggleDarkMode());
-        
-        // Login buttons
-        document.getElementById('loginBtn').addEventListener('click', () => this.showLoginModal());
-        document.getElementById('logoutBtn').addEventListener('click', () => this.logout());
-        
-        // Modal close buttons
-        document.getElementById('loginClose').addEventListener('click', () => this.closeLoginModal());
-        document.getElementById('phoneClose').addEventListener('click', () => this.closePhoneModal());
-        document.getElementById('modalClose').addEventListener('click', () => this.closeModal());
-        
-        // Auth tabs
-        document.querySelectorAll('.auth-tab').forEach(tab => {
-            tab.addEventListener('click', (e) => this.switchAuthTab(e.target));
-        });
-        
-        // Auth forms
-        document.getElementById('loginForm').addEventListener('submit', (e) => this.handleLogin(e));
-        document.getElementById('signupForm').addEventListener('submit', (e) => this.handleSignup(e));
-        document.getElementById('phoneForm').addEventListener('submit', (e) => this.handlePhoneLogin(e));
-        
-        // Social auth
-        document.getElementById('googleLogin').addEventListener('click', () => this.handleGoogleLogin());
-        document.getElementById('phoneLogin').addEventListener('click', () => this.showPhoneModal());
-        
-        // Progress steps navigation - FIXED: Added proper event delegation
-        document.addEventListener('click', (e) => {
-            if (e.target.classList.contains('progress-step')) {
-                const step = parseInt(e.target.getAttribute('data-step'));
-                this.goToStep(step);
-            }
-        });
-    }
-
-    checkAuthStatus() {
-        const savedUser = localStorage.getItem('careerPathUser');
-        const savedAuth = localStorage.getItem('careerPathAuth');
-        
-        if (savedUser && savedAuth === 'true') {
-            this.state.isAuthenticated = true;
-            this.state.currentUser = JSON.parse(savedUser);
-            this.updateAuthUI();
-        }
-    }
-
-    updateAuthUI() {
-        const userInfo = document.getElementById('userInfo');
-        const authButtons = document.getElementById('authButtons');
-        const progressContainer = document.getElementById('progressContainer');
-        
-        if (this.state.isAuthenticated && this.state.currentUser) {
-            userInfo.style.display = 'flex';
-            authButtons.style.display = 'none';
-            document.getElementById('userName').textContent = this.state.currentUser.name;
-            progressContainer.style.display = 'block';
-        } else {
-            userInfo.style.display = 'none';
-            authButtons.style.display = 'block';
-            progressContainer.style.display = 'none';
-            this.showLoginModal();
-        }
-    }
-
-    showLoginModal() {
-        document.getElementById('loginModal').style.display = 'flex';
-    }
-
-    closeLoginModal() {
-        document.getElementById('loginModal').style.display = 'none';
-        this.resetAuthForms();
-    }
-
-    showPhoneModal() {
-        document.getElementById('phoneModal').style.display = 'flex';
-        document.getElementById('loginModal').style.display = 'none';
-    }
-
-    closePhoneModal() {
-        document.getElementById('phoneModal').style.display = 'none';
-        this.resetPhoneForm();
-    }
-
-    switchAuthTab(tab) {
-        document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
-        document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
-        
-        tab.classList.add('active');
-        const tabName = tab.getAttribute('data-tab');
-        document.getElementById(`${tabName}Form`).classList.add('active');
-    }
-
-    async handleLogin(e) {
-        e.preventDefault();
-        const email = document.getElementById('loginEmail').value;
-        const password = document.getElementById('loginPassword').value;
-        
-        // Simple validation
-        if (!email || !password) {
-            this.showToast('Please fill in all fields', 'error');
-            return;
-        }
-        
-        // Mock authentication
-        const users = JSON.parse(localStorage.getItem('careerPathUsers') || '[]');
-        const user = users.find(u => (u.email === email || u.phone === email) && u.password === password);
-        
-        if (user) {
-            this.state.isAuthenticated = true;
-            this.state.currentUser = user;
-            localStorage.setItem('careerPathAuth', 'true');
-            localStorage.setItem('careerPathUser', JSON.stringify(user));
-            this.updateAuthUI();
-            this.closeLoginModal();
-            this.showToast('Login successful!', 'success');
-        } else {
-            this.showToast('Invalid credentials', 'error');
-        }
-    }
-
-    async handleSignup(e) {
-        e.preventDefault();
-        const name = document.getElementById('signupName').value;
-        const email = document.getElementById('signupEmail').value;
-        const phone = document.getElementById('signupPhone').value;
-        const password = document.getElementById('signupPassword').value;
-        const confirm = document.getElementById('signupConfirm').value;
-        
-        // Validation
-        if (!name || !email || !phone || !password || !confirm) {
-            this.showToast('Please fill in all fields', 'error');
-            return;
-        }
-        
-        if (password !== confirm) {
-            this.showToast('Passwords do not match', 'error');
-            return;
-        }
-        
-        if (!document.getElementById('acceptTerms').checked) {
-            this.showToast('Please accept the terms and conditions', 'error');
-            return;
-        }
-        
-        // Check if user already exists
-        const users = JSON.parse(localStorage.getItem('careerPathUsers') || '[]');
-        if (users.find(u => u.email === email)) {
-            this.showToast('User already exists with this email', 'error');
-            return;
-        }
-        
-        // Create new user
-        const newUser = {
-            id: Date.now().toString(),
-            name,
-            email,
-            phone,
-            password, // In real app, this should be hashed
-            createdAt: new Date().toISOString()
-        };
-        
-        users.push(newUser);
-        localStorage.setItem('careerPathUsers', JSON.stringify(users));
-        
-        this.state.isAuthenticated = true;
-        this.state.currentUser = newUser;
-        localStorage.setItem('careerPathAuth', 'true');
-        localStorage.setItem('careerPathUser', JSON.stringify(newUser));
-        this.updateAuthUI();
-        this.closeLoginModal();
-        this.showToast('Account created successfully!', 'success');
-    }
-
-    async handlePhoneLogin(e) {
-        e.preventDefault();
-        const countryCode = document.getElementById('countryCode').value;
-        const phoneNumber = document.getElementById('phoneNumber').value;
-        const otpCode = document.getElementById('otpCode').value;
-        const fullPhone = countryCode + phoneNumber;
-        
-        const submitBtn = document.getElementById('phoneSubmit');
-        const submitText = document.getElementById('phoneSubmitText');
-        const spinner = document.getElementById('phoneSpinner');
-        const otpGroup = document.getElementById('otpGroup');
-        
-        // Send OTP
-        if (!otpCode) {
-            submitBtn.disabled = true;
-            spinner.style.display = 'inline-block';
-            submitText.textContent = 'Sending OTP...';
-            
-            // Mock OTP sending
-            setTimeout(() => {
-                submitBtn.disabled = false;
-                spinner.style.display = 'none';
-                submitText.textContent = 'Verify OTP';
-                otpGroup.style.display = 'block';
-                this.startOTPTimer();
-                this.showToast('OTP sent to your phone', 'success');
-            }, 2000);
-        } else {
-            // Verify OTP (mock verification - always 123456)
-            if (otpCode === '123456') {
-                const user = {
-                    id: Date.now().toString(),
-                    name: `User_${phoneNumber}`,
-                    phone: fullPhone,
-                    createdAt: new Date().toISOString()
-                };
-                
-                this.state.isAuthenticated = true;
-                this.state.currentUser = user;
-                localStorage.setItem('careerPathAuth', 'true');
-                localStorage.setItem('careerPathUser', JSON.stringify(user));
-                this.updateAuthUI();
-                this.closePhoneModal();
-                this.showToast('Phone login successful!', 'success');
-            } else {
-                this.showToast('Invalid OTP code', 'error');
-            }
-        }
-    }
-
-    startOTPTimer() {
-        let timeLeft = 60;
-        const timerElement = document.getElementById('countdown');
-        const timerContainer = document.getElementById('otpTimer');
-        
-        const timer = setInterval(() => {
-            timeLeft--;
-            timerElement.textContent = timeLeft;
-            
-            if (timeLeft <= 0) {
-                clearInterval(timer);
-                timerContainer.innerHTML = '<a href="#" onclick="app.resendOTP()" style="color: var(--primary);">Resend OTP</a>';
-            }
-        }, 1000);
-    }
-
-    resendOTP() {
-        this.showToast('OTP resent to your phone', 'success');
-        this.startOTPTimer();
-        document.getElementById('otpTimer').innerHTML = 'Resend OTP in <span id="countdown">60</span>s';
-    }
-
-    async handleGoogleLogin() {
-        // Mock Google login
-        this.showToast('Redirecting to Google...', 'info');
-        
-        setTimeout(() => {
-            const user = {
-                id: Date.now().toString(),
-                name: 'Google User',
-                email: 'user@gmail.com',
-                provider: 'google',
-                createdAt: new Date().toISOString()
-            };
-            
-            this.state.isAuthenticated = true;
-            this.state.currentUser = user;
-            localStorage.setItem('careerPathAuth', 'true');
-            localStorage.setItem('careerPathUser', JSON.stringify(user));
-            this.updateAuthUI();
-            this.closeLoginModal();
-            this.showToast('Google login successful!', 'success');
-        }, 1500);
-    }
-
-    logout() {
-        this.state.isAuthenticated = false;
-        this.state.currentUser = null;
-        localStorage.removeItem('careerPathAuth');
-        localStorage.removeItem('careerPathUser');
-        this.updateAuthUI();
-        this.showToast('Logged out successfully', 'success');
-    }
-
-    resetAuthForms() {
-        document.querySelectorAll('.auth-form input').forEach(input => {
-            input.value = '';
-        });
-        document.getElementById('loginForm').classList.add('active');
-        document.getElementById('signupForm').classList.remove('active');
-        document.querySelectorAll('.auth-tab').forEach((tab, index) => {
-            tab.classList.toggle('active', index === 0);
-        });
-    }
-
-    resetPhoneForm() {
-        document.getElementById('phoneNumber').value = '';
-        document.getElementById('otpCode').value = '';
-        document.getElementById('otpGroup').style.display = 'none';
-        document.getElementById('phoneSubmitText').textContent = 'Send OTP';
-        document.getElementById('phoneSpinner').style.display = 'none';
-        document.getElementById('phoneSubmit').disabled = false;
-    }
-
-    toggleDarkMode() {
-        document.body.classList.toggle('dark-mode');
-        const isDarkMode = document.body.classList.contains('dark-mode');
-        const icon = document.querySelector('#themeToggle i');
-        
-        if (isDarkMode) {
-            icon.className = 'fas fa-sun';
-            localStorage.setItem('darkMode', 'true');
-        } else {
-            icon.className = 'fas fa-moon';
-            localStorage.setItem('darkMode', 'false');
-        }
-    }
-
-    render() {
-        if (!this.state.isAuthenticated) {
-            this.updateAuthUI();
-            return;
-        }
-
-        this.updateProgressBar();
-        
-        switch(this.state.currentStep) {
-            case 1:
-                this.renderPersonalDetails();
-                break;
-            case 2:
-                this.renderSkillsInterests();
-                break;
-            case 3:
-                this.renderCareerGoals();
-                break;
-            case 4:
-                this.renderAIAnalysis();
-                break;
-            case 5:
-                this.renderResults();
-                break;
-        }
-    }
-
-    updateProgressBar() {
-        const progressSteps = document.querySelectorAll('.progress-step');
-        const progressFill = document.getElementById('progressFill');
-        
-        progressSteps.forEach((step, index) => {
-            const stepNumber = parseInt(step.getAttribute('data-step'));
-            step.classList.toggle('active', stepNumber <= this.state.currentStep);
-        });
-        
-        const progressPercentage = (this.state.currentStep / this.state.totalSteps) * 100;
-        progressFill.style.width = `${progressPercentage}%`;
-    }
-
-    goToStep(step) {
-        if (step >= 1 && step <= this.state.totalSteps) {
-            this.state.currentStep = step;
-            this.render();
-        }
-    }
-
-    renderPersonalDetails() {
-        const content = `
-            <div class="form-container">
-                <div class="form-grid">
-                    <div class="form-content">
-                        <h2 class="form-title">Tell us about yourself</h2>
-                        <p class="form-subtitle">We'll use this information to personalize your career recommendations</p>
-                        
-                        <div class="form-group">
-                            <label class="form-label" for="name">Full Name</label>
-                            <input type="text" id="name" class="form-input" placeholder="Enter your full name" value="${this.state.userData.name}">
-                            ${this.state.errors.name ? `<div class="error-message">${this.state.errors.name}</div>` : ''}
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="form-label" for="email">Email Address</label>
-                            <input type="email" id="email" class="form-input" placeholder="Enter your email" value="${this.state.userData.email}">
-                            ${this.state.errors.email ? `<div class="error-message">${this.state.errors.email}</div>` : ''}
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="form-label" for="education">Education Level</label>
-                            <select id="education" class="form-input form-select">
-                                <option value="">Select education level</option>
-                                <option value="High School" ${this.state.userData.education === 'High School' ? 'selected' : ''}>High School</option>
-                                <option value="Bachelor's" ${this.state.userData.education === 'Bachelor\'s' ? 'selected' : ''}>Bachelor's Degree</option>
-                                <option value="Master's" ${this.state.userData.education === 'Master\'s' ? 'selected' : ''}>Master's Degree</option>
-                                <option value="PhD" ${this.state.userData.education === 'PhD' ? 'selected' : ''}>PhD</option>
-                            </select>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="form-label" for="location">Location</label>
-                            <input type="text" id="location" class="form-input" placeholder="City, Country" value="${this.state.userData.location}">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="form-label" for="skills">Your Skills</label>
-                            <textarea id="skills" class="form-input form-textarea" placeholder="List your skills (separated by commas)">${this.state.userData.skills}</textarea>
-                            ${this.state.errors.skills ? `<div class="error-message">${this.state.errors.skills}</div>` : ''}
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="form-label" for="employmentStatus">Employment Status</label>
-                            <select id="employmentStatus" class="form-input form-select">
-                                <option value="">Select your status</option>
-                                <option value="Student" ${this.state.userData.employmentStatus === 'Student' ? 'selected' : ''}>Student</option>
-                                <option value="Fresher" ${this.state.userData.employmentStatus === 'Fresher' ? 'selected' : ''}>Fresher (0-1 years)</option>
-                                <option value="Experienced" ${this.state.userData.employmentStatus === 'Experienced' ? 'selected' : ''}>Experienced (1+ years)</option>
-                                <option value="Job Seeker" ${this.state.userData.employmentStatus === 'Job Seeker' ? 'selected' : ''}>Job Seeker</option>
-                            </select>
-                            ${this.state.errors.employmentStatus ? `<div class="error-message">${this.state.errors.employmentStatus}</div>` : ''}
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="form-label" for="experience">Years of Experience</label>
-                            <select id="experience" class="form-input form-select">
-                                <option value="">Select experience level</option>
-                                <option value="0" ${this.state.userData.experience === '0' ? 'selected' : ''}>Fresher (0 years)</option>
-                                <option value="0-1" ${this.state.userData.experience === '0-1' ? 'selected' : ''}>0-1 years</option>
-                                <option value="1-3" ${this.state.userData.experience === '1-3' ? 'selected' : ''}>1-3 years</option>
-                                <option value="3-5" ${this.state.userData.experience === '3-5' ? 'selected' : ''}>3-5 years</option>
-                                <option value="5-10" ${this.state.userData.experience === '5-10' ? 'selected' : ''}>5-10 years</option>
-                                <option value="10+" ${this.state.userData.experience === '10+' ? 'selected' : ''}>10+ years</option>
-                            </select>
-                            ${this.state.errors.experience ? `<div class="error-message">${this.state.errors.experience}</div>` : ''}
-                        </div>
-                        
-                        <div class="form-actions">
-                            <button type="button" class="btn btn-primary" onclick="app.validateStep1()">
-                                Continue to Skills & Interests
-                                <i class="fas fa-arrow-right"></i>
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <div class="form-sidebar">
-                        <h3 class="sidebar-title">AI-Powered Career Guidance</h3>
-                        <p class="sidebar-description">We analyze your skills, experience, and goals to create a personalized career roadmap.</p>
-                        
-                        <div class="feature-list">
-                            <div class="feature-item">
-                                <i class="fas fa-check-circle feature-icon"></i>
-                                <div class="feature-text">Personalized career paths matched to your profile</div>
-                            </div>
-                            <div class="feature-item">
-                                <i class="fas fa-check-circle feature-icon"></i>
-                                <div class="feature-text">Skill gap analysis and learning roadmap</div>
-                            </div>
-                            <div class="feature-item">
-                                <i class="fas fa-check-circle feature-icon"></i>
-                                <div class="feature-text">Job readiness score and probability matching</div>
-                            </div>
-                        </div>
-                        
-                        <div class="sample-card">
-                            <div class="sample-title">Sample Career Match</div>
-                            <div class="sample-career">
-                                <div class="sample-icon">
-                                    <i class="fas fa-code"></i>
-                                </div>
-                                <div class="sample-details">
-                                    <div class="sample-name">Full Stack Developer</div>
-                                    <div class="sample-match">85% match</div>
-                                </div>
-                            </div>
-                            <div class="sample-meta">
-                                <span>Salary: ₹6-15 LPA</span>
-                                <span>Time: 6-9 months</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        document.getElementById('app-content').innerHTML = content;
-    }
-
-    renderSkillsInterests() {
-        const techInterests = [
-            { name: 'Software Development', icon: 'fa-laptop-code' },
-            { name: 'Data Science', icon: 'fa-chart-line' },
-            { name: 'UI/UX Design', icon: 'fa-paint-brush' },
-            { name: 'Cloud Computing', icon: 'fa-cloud' },
-            { name: 'Digital Marketing', icon: 'fa-bullhorn' },
-            { name: 'DevOps', icon: 'fa-code-branch' },
-            { name: 'Cybersecurity', icon: 'fa-shield-alt' },
-            { name: 'AI/ML Engineering', icon: 'fa-robot' }
-        ];
-        
-        const nonTechInterests = [
-            { name: 'Business Management', icon: 'fa-briefcase' },
-            { name: 'Healthcare', icon: 'fa-heartbeat' },
-            { name: 'Education', icon: 'fa-graduation-cap' },
-            { name: 'Finance', icon: 'fa-chart-line' },
-            { name: 'Sales', icon: 'fa-handshake' },
-            { name: 'Content Writing', icon: 'fa-pen' },
-            { name: 'Graphic Design', icon: 'fa-palette' },
-            { name: 'Photography', icon: 'fa-camera' }
-        ];
-        
-        const content = `
-            <div class="form-container">
-                <div class="form-grid">
-                    <div class="form-content">
-                        <h2 class="form-title">Your Skills & Interests</h2>
-                        <p class="form-subtitle">Select up to 5 areas that interest you the most</p>
-                        
-                        <div class="form-group">
-                            <label class="form-label">Technical Interests</label>
-                            <div class="interest-grid">
-                                ${techInterests.map(interest => `
-                                    <div class="interest-option ${this.state.userData.interests.includes(interest.name) ? 'selected' : ''}" data-interest="${interest.name}">
-                                        <i class="fas ${interest.icon} interest-icon"></i>
-                                        <div class="interest-name">${interest.name}</div>
-                                    </div>
-                                `).join('')}
-                            </div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="form-label">Non-Tech Interests</label>
-                            <div class="interest-grid">
-                                ${nonTechInterests.map(interest => `
-                                    <div class="interest-option ${this.state.userData.interests.includes(interest.name) ? 'selected' : ''}" data-interest="${interest.name}">
-                                        <i class="fas ${interest.icon} interest-icon"></i>
-                                        <div class="interest-name">${interest.name}</div>
-                                    </div>
-                                `).join('')}
-                            </div>
-                        </div>
-                        
-                        ${this.state.errors.interests ? `<div class="error-message">${this.state.errors.interests}</div>` : ''}
-                        
-                        <div class="form-actions">
-                            <button type="button" class="btn btn-secondary" onclick="app.prevStep()">
-                                <i class="fas fa-arrow-left"></i>
-                                Back
-                            </button>
-                            <button type="button" class="btn btn-primary" onclick="app.validateStep2()">
-                                Continue to Career Goals
-                                <i class="fas fa-arrow-right"></i>
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <div class="form-sidebar">
-                        <h3 class="sidebar-title">Follow Your Passions</h3>
-                        <p class="sidebar-description">Your interests help us recommend careers you'll truly enjoy and excel in.</p>
-                        
-                        <div class="feature-list">
-                            <div class="feature-item">
-                                <i class="fas fa-check-circle feature-icon"></i>
-                                <div class="feature-text">People who work in fields they're passionate about report higher job satisfaction</div>
-                            </div>
-                            <div class="feature-item">
-                                <i class="fas fa-check-circle feature-icon"></i>
-                                <div class="feature-text">Interest alignment leads to better long-term career growth</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        document.getElementById('app-content').innerHTML = content;
-        
-        // Add event listeners to interest options
-        setTimeout(() => {
-            const options = document.querySelectorAll('.interest-option');
-            options.forEach(option => {
-                option.addEventListener('click', function() {
-                    const interest = this.getAttribute('data-interest');
-                    
-                    if (app.state.userData.interests.includes(interest)) {
-                        // Remove if already selected
-                        app.state.userData.interests = app.state.userData.interests.filter(i => i !== interest);
-                        this.classList.remove('selected');
-                    } else {
-                        // Add if not selected and less than 5
-                        if (app.state.userData.interests.length < 5) {
-                            app.state.userData.interests.push(interest);
-                            this.classList.add('selected');
-                        } else {
-                            app.showToast("You can select up to 5 interests only", "warning");
-                        }
-                    }
-                });
-            });
-        }, 100);
-    }
-
-    renderCareerGoals() {
-        const content = `
-            <div class="form-container">
-                <div class="form-grid">
-                    <div class="form-content">
-                        <h2 class="form-title">Your Career Goals</h2>
-                        <p class="form-subtitle">Define what success looks like for your career journey</p>
-                        
-                        <div class="form-group">
-                            <label class="form-label" for="goals">Career Goals & Aspirations</label>
-                            <textarea id="goals" class="form-input form-textarea" placeholder="Describe your career goals, what you want to achieve, and your aspirations...">${this.state.userData.goals}</textarea>
-                            ${this.state.errors.goals ? `<div class="error-message">${this.state.errors.goals}</div>` : ''}
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="form-label" for="constraints">Constraints & Preferences</label>
-                            <textarea id="constraints" class="form-input form-textarea" placeholder="Any constraints (time, location, financial, etc.) or preferences...">${this.state.userData.constraints}</textarea>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="form-label" for="salaryRange">Target Salary Range (INR)</label>
-                            <select id="salaryRange" class="form-input form-select">
-                                <option value="">Select expected salary</option>
-                                <option value="Under ₹3 LPA" ${this.state.userData.salaryRange === 'Under ₹3 LPA' ? 'selected' : ''}>Under ₹3 LPA</option>
-                                <option value="₹3-5 LPA" ${this.state.userData.salaryRange === '₹3-5 LPA' ? 'selected' : ''}>₹3-5 LPA</option>
-                                <option value="₹5-7 LPA" ${this.state.userData.salaryRange === '₹5-7 LPA' ? 'selected' : ''}>₹5-7 LPA</option>
-                                <option value="₹7-10 LPA" ${this.state.userData.salaryRange === '₹7-10 LPA' ? 'selected' : ''}>₹7-10 LPA</option>
-                                <option value="₹10-15 LPA" ${this.state.userData.salaryRange === '₹10-15 LPA' ? 'selected' : ''}>₹10-15 LPA</option>
-                                <option value="₹15-20 LPA" ${this.state.userData.salaryRange === '₹15-20 LPA' ? 'selected' : ''}>₹15-20 LPA</option>
-                                <option value="₹20+ LPA" ${this.state.userData.salaryRange === '₹20+ LPA' ? 'selected' : ''}>₹20+ LPA</option>
-                            </select>
-                            ${this.state.errors.salaryRange ? `<div class="error-message">${this.state.errors.salaryRange}</div>` : ''}
-                        </div>
-                        
-                        <div class="form-actions">
-                            <button type="button" class="btn btn-secondary" onclick="app.prevStep()">
-                                <i class="fas fa-arrow-left"></i>
-                                Back
-                            </button>
-                            <button type="button" class="btn btn-primary" onclick="app.validateStep3()">
-                                Start AI Analysis
-                                <i class="fas fa-bolt"></i>
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <div class="form-sidebar">
-                        <h3 class="sidebar-title">Set Clear Goals</h3>
-                        <p class="sidebar-description">Define what success looks like for your career journey to get personalized recommendations.</p>
-                        
-                        <div class="feature-list">
-                            <div class="feature-item">
-                                <i class="fas fa-check-circle feature-icon"></i>
-                                <div class="feature-text">Be specific about your timeline and constraints</div>
-                            </div>
-                            <div class="feature-item">
-                                <i class="fas fa-check-circle feature-icon"></i>
-                                <div class="feature-text">Consider your financial needs and salary expectations</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-
-        document.getElementById('app-content').innerHTML = content;
-    }
-
-    renderAIAnalysis() {
-        const content = `
-            <div class="ai-analysis">
-                <div class="ai-brain">
-                    <i class="fas fa-brain"></i>
-                </div>
-                <h2 class="analyzing-text">AI Analysis in Progress<span class="analyzing-dots"></span></h2>
-                <p class="form-subtitle">Analyzing your profile against thousands of career paths</p>
-                
-                <div class="loading-spinner"></div>
-                
-                <div class="analysis-stats">
-                    <div class="analysis-stat">
-                        <div class="stat-number" id="careersAnalyzed">0</div>
-                        <div class="stat-label">Career Paths Analyzed</div>
-                    </div>
-                    <div class="analysis-stat">
-                        <div class="stat-number" id="matchAccuracy">0%</div>
-                        <div class="stat-label">Match Accuracy</div>
-                    </div>
-                    <div class="analysis-stat">
-                        <div class="stat-number" id="skillsMapped">0</div>
-                        <div class="stat-label">Skills Mapped</div>
-                    </div>
-                </div>
-            </div>
-        `;
-
-        document.getElementById('app-content').innerHTML = content;
-        this.startAIAnalysis();
-    }
-
-    startAIAnalysis() {
-        let progress = 0;
-        const careersAnalyzed = document.getElementById('careersAnalyzed');
-        const matchAccuracy = document.getElementById('matchAccuracy');
-        const skillsMapped = document.getElementById('skillsMapped');
-
-        const analysisInterval = setInterval(() => {
-            progress += Math.random() * 15;
-            if (progress > 100) progress = 100;
-            
-            // Update stats
-            if (careersAnalyzed) {
-                careersAnalyzed.textContent = Math.floor(progress * 23);
-                matchAccuracy.textContent = `${Math.min(100, Math.floor(progress * 1.2))}%`;
-                skillsMapped.textContent = Math.floor(progress * 8);
-            }
-
-            if (progress >= 100) {
-                clearInterval(analysisInterval);
-                setTimeout(() => {
-                    this.state.currentStep = 5;
-                    this.render();
-                }, 1000);
-            }
-        }, 200);
-    }
-
-    renderResults() {
-        if (this.state.topCareers.length === 0) {
-            this.generateResults();
-        }
-        
-        const content = `
-            <div class="results-container">
-                <div class="results-header">
-                    <h2 class="results-title">Your Career Path Recommendations</h2>
-                    <div class="results-actions">
-                        <button type="button" class="btn btn-outline" onclick="app.generatePDF()">
-                            <i class="fas fa-file-pdf"></i>
-                            Export PDF
-                        </button>
-                        <button type="button" class="btn btn-outline" onclick="app.restartProcess()">
-                            <i class="fas fa-redo"></i>
-                            Start Over
-                        </button>
-                    </div>
-                </div>
-                
-                <div class="career-grid">
-                    ${this.state.topCareers.map((career, index) => `
-                        <div class="career-card">
-                            <div class="career-header">
-                                <div class="career-icon ${index === 0 ? 'primary' : index === 1 ? 'secondary' : 'tertiary'}">
-                                    <i class="fas ${this.getCareerIcon(career.name)}"></i>
-                                </div>
-                                <div class="career-info">
-                                    <div class="career-name">${career.name}</div>
-                                    <div class="career-match">${career.match}% Match</div>
-                                </div>
-                            </div>
-                            <div class="career-description">${career.description}</div>
-                            <div class="career-stats">
-                                <div class="career-stat">
-                                    <span class="career-stat-label">Salary Range</span>
-                                    <span class="career-stat-value">${career.salary}</span>
-                                </div>
-                                <div class="career-stat">
-                                    <span class="career-stat-label">Market Demand</span>
-                                    <span class="career-stat-value">${career.demand}</span>
-                                </div>
-                                <div class="career-stat">
-                                    <span class="career-stat-label">Growth</span>
-                                    <span class="career-stat-value">${career.growth}</span>
-                                </div>
-                            </div>
-                            <div class="career-trend">${career.trend}</div>
-                            <button type="button" class="btn btn-primary career-action" onclick="app.showCareerDetails('${career.name}')">
-                                View Details
-                            </button>
-                        </div>
-                    `).join('')}
-                </div>
-                
-                <div class="skill-analysis">
-                    <h3 class="skill-title">Your Skill Gap Analysis</h3>
-                    ${this.state.topCareers[0].missingSkills.map((skill, index) => `
-                        <div class="skill-item">
-                            <div class="skill-header">
-                                <span class="skill-name">${skill}</span>
-                                <span class="skill-percentage">${(index + 1) * 25}%</span>
-                            </div>
-                            <div class="skill-bar">
-                                <div class="skill-progress" style="width: ${(index + 1) * 25}%"></div>
-                            </div>
-                            <div class="skill-note">Critical skill for ${this.state.topCareers[0].name}. Consider learning through online courses.</div>
-                        </div>
-                    `).join('')}
-                    
-                    <div class="skill-strategy">
-                        <div class="strategy-title">Skill Improvement Strategy</div>
-                        <div class="strategy-text">Based on your current skills, we recommend focusing on ${this.state.topCareers[0].missingSkills.slice(0, 2).join(' and ')} first, as these are fundamental to your chosen career path.</div>
-                    </div>
-                </div>
-                
-                <div class="learning-plan">
-                    <h3 class="plan-title">12-Week Learning Plan</h3>
-                    <div class="plan-timeline">
-                        <div class="plan-phase">
-                            <div class="plan-marker">1</div>
-                            <div class="plan-content">
-                                <div class="plan-phase-title">Weeks 1-4: Foundational Skills</div>
-                                <div class="plan-phase-desc">Focus on ${this.state.topCareers[0].missingSkills.slice(0, 2).join(' and ')}</div>
-                            </div>
-                        </div>
-                        <div class="plan-phase">
-                            <div class="plan-marker">2</div>
-                            <div class="plan-content">
-                                <div class="plan-phase-title">Weeks 5-8: Intermediate Concepts</div>
-                                <div class="plan-phase-desc">Build projects using ${this.state.topCareers[0].missingSkills.slice(2, 4).join(' and ')}</div>
-                            </div>
-                        </div>
-                        <div class="plan-phase">
-                            <div class="plan-marker">3</div>
-                            <div class="plan-content">
-                                <div class="plan-phase-title">Weeks 9-12: Portfolio Development</div>
-                                <div class="plan-phase-desc">Create a portfolio showcasing your new skills</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-
-        document.getElementById('app-content').innerHTML = content;
-        
-        // Animate skill bars
-        setTimeout(() => {
-            document.querySelectorAll('.skill-progress').forEach(bar => {
-                bar.style.transition = 'width 1.5s ease';
-            });
-        }, 500);
-    }
-
-    generateResults() {
-        const userSkills = this.state.userData.skills.toLowerCase();
-        
-        this.state.topCareers = Object.keys(careerData).map(careerName => {
-            const career = careerData[careerName];
-            const requiredSkills = career.skills.map(skill => skill.toLowerCase());
-            
-            // Calculate match percentage based on skills
-            const matchedSkills = requiredSkills.filter(skill => 
-                userSkills.includes(skill.toLowerCase())
-            );
-            
-            const matchPercentage = Math.round((matchedSkills.length / requiredSkills.length) * 100);
-            
-            return {
-                name: careerName,
-                match: matchPercentage,
-                description: career.description,
-                salary: career.salary,
-                demand: career.demand,
-                growth: career.growth,
-                trend: career.trend,
-                missingSkills: requiredSkills.filter(skill => 
-                    !userSkills.includes(skill.toLowerCase())
-                )
-            };
-        }).sort((a, b) => b.match - a.match).slice(0, 3);
-    }
-
-    getCareerIcon(career) {
-        const icons = {
-            'Full Stack Developer': 'fa-code',
-            'Data Scientist': 'fa-chart-line',
-            'UX/UI Designer': 'fa-paint-brush',
-            'AI Engineer': 'fa-robot',
-            'Cloud Architect': 'fa-cloud',
-            'DevOps Engineer': 'fa-code-branch'
-        };
-        return icons[career] || 'fa-briefcase';
-    }
-
-    showCareerDetails(careerName) {
-        const career = careerData[careerName];
-        
-        document.getElementById('modalTitle').textContent = careerName;
-        document.getElementById('modalBody').innerHTML = `
-            <div class="career-description mb-4">${career.description}</div>
-            
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                <div>
-                    <h3 style="margin-bottom: 10px;">Required Skills</h3>
-                    <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px;">
-                        ${career.skills.map(skill => `
-                            <span style="background-color: var(--gray-100); padding: 6px 12px; border-radius: 20px; font-size: 14px; color: var(--gray-700);">
-                                ${skill}
-                            </span>
-                        `).join('')}
-                    </div>
-                    
-                    <h3 style="margin-bottom: 10px;">Learning Resources</h3>
-                    <div>
-                        ${career.resources.map(resource => `
-                            <div style="display: flex; justify-content: between; align-items: center; padding: 12px; border: 1px solid var(--gray-200); border-radius: var(--border-radius); margin-bottom: 8px;">
-                                <a href="${resource.link}" target="_blank" style="color: var(--primary); text-decoration: none; flex: 1;">
-                                    <strong>${resource.name}</strong> - ${resource.provider} (${resource.duration})
-                                </a>
-                                <span style="padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; background-color: ${resource.free ? 'rgba(16, 185, 129, 0.1)' : 'rgba(37, 99, 235, 0.1)'}; color: ${resource.free ? 'var(--success)' : 'var(--primary)'};">
-                                    ${resource.free ? 'Free' : 'Paid'}
-                                </span>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-                
-                <div>
-                    <h3 style="margin-bottom: 10px;">Career Overview</h3>
-                    
-                    <div style="margin-bottom: 20px;">
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                            <span>Salary Range</span>
-                            <span style="font-weight: 600;">${career.salary}</span>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                            <span>Market Demand</span>
-                            <span style="font-weight: 600;">${career.demand}</span>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                            <span>Growth Rate</span>
-                            <span style="font-weight: 600;">${career.growth}</span>
-                        </div>
-                    </div>
-                    
-                    <div style="font-size: 14px; color: var(--gray-600); margin-bottom: 20px;">
-                        ${career.trend}
-                    </div>
-                    
-                    <h3 style="margin-bottom: 10px;">Top Companies</h3>
-                    <div style="display: flex; flex-wrap: wrap; gap: 8px;">
-                        ${career.companies.map(company => `
-                            <span style="background-color: var(--gray-100); padding: 6px 12px; border-radius: 20px; font-size: 14px; color: var(--gray-700);">
-                                ${company}
-                            </span>
-                        `).join('')}
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        document.getElementById('careerModal').style.display = 'flex';
-    }
-
-    closeModal() {
-        document.getElementById('careerModal').style.display = 'none';
-    }
-
-    // Navigation functions
-    nextStep() {
-        if (this.state.currentStep < this.state.totalSteps) {
-            this.state.currentStep++;
-            this.render();
-        }
-    }
-
-    prevStep() {
-        if (this.state.currentStep > 1) {
-            this.state.currentStep--;
-            this.state.errors = {};
-            this.render();
-        }
-    }
-
-    // Validation functions
-    validateStep1() {
-        this.state.errors = {};
-        
-        // Get form values
-        this.state.userData.name = document.getElementById('name').value;
-        this.state.userData.email = document.getElementById('email').value;
-        this.state.userData.skills = document.getElementById('skills').value;
-        this.state.userData.employmentStatus = document.getElementById('employmentStatus').value;
-        this.state.userData.experience = document.getElementById('experience').value;
-        this.state.userData.education = document.getElementById('education').value;
-        this.state.userData.location = document.getElementById('location').value;
-        
-        // Validate
-        if (!this.state.userData.name.trim()) {
-            this.state.errors.name = 'Please enter your name';
-        }
-        
-        if (!this.state.userData.email.trim()) {
-            this.state.errors.email = 'Please enter your email';
-        } else if (!/\S+@\S+\.\S+/.test(this.state.userData.email)) {
-            this.state.errors.email = 'Please enter a valid email address';
-        }
-        
-        if (!this.state.userData.skills.trim()) {
-            this.state.errors.skills = 'Please enter at least one skill';
-        }
-        
-        if (!this.state.userData.employmentStatus) {
-            this.state.errors.employmentStatus = 'Please select your employment status';
-        }
-        
-        if (!this.state.userData.experience) {
-            this.state.errors.experience = 'Please select your experience level';
-        }
-        
-        if (Object.keys(this.state.errors).length === 0) {
-            this.nextStep();
-        } else {
-            this.render();
-        }
-    }
-
-    validateStep2() {
-        this.state.errors = {};
-        
-        if (this.state.userData.interests.length === 0) {
-            this.state.errors.interests = 'Please select at least one interest';
-        }
-        
-        if (Object.keys(this.state.errors).length === 0) {
-            this.nextStep();
-        } else {
-            this.render();
-        }
-    }
-
-    validateStep3() {
-        this.state.errors = {};
-        
-        // Get form values
-        this.state.userData.goals = document.getElementById('goals').value;
-        this.state.userData.constraints = document.getElementById('constraints').value;
-        this.state.userData.salaryRange = document.getElementById('salaryRange').value;
-        
-        // Validate
-        if (!this.state.userData.goals.trim()) {
-            this.state.errors.goals = 'Please describe your career goals';
-        }
-        
-        if (!this.state.userData.salaryRange) {
-            this.state.errors.salaryRange = 'Please select your expected salary range';
-        }
-        
-        if (Object.keys(this.state.errors).length === 0) {
-            this.nextStep();
-        } else {
-            this.render();
-        }
-    }
-
-    // Utility functions
-    showToast(message, type = 'info') {
-        // Create toast element
-        const toast = document.createElement('div');
-        toast.className = `toast ${type}`;
-        toast.innerHTML = `
-            <i class="fas fa-${this.getToastIcon(type)}"></i>
-            <span>${message}</span>
-        `;
-        
-        // Add to page
-        document.body.appendChild(toast);
-        
-        // Animate in
-        setTimeout(() => toast.classList.add('show'), 100);
-        
-        // Remove after delay
-        setTimeout(() => {
-            toast.classList.remove('show');
-            setTimeout(() => toast.remove(), 300);
-        }, 3000);
-    }
-
-    getToastIcon(type) {
-        const icons = {
-            'success': 'check-circle',
-            'error': 'exclamation-circle',
-            'warning': 'exclamation-triangle',
-            'info': 'info-circle'
-        };
-        return icons[type] || 'info-circle';
-    }
-
-    generatePDF() {
-        this.showToast('Generating PDF report...', 'info');
-        // In a real app, this would generate a PDF using jsPDF
-        setTimeout(() => {
-            this.showToast('PDF report generated successfully!', 'success');
-        }, 2000);
-    }
-
-    restartProcess() {
-        this.state.currentStep = 1;
-        this.state.userData = {
-            name: '',
-            email: '',
-            skills: '',
-            experience: '',
-            employmentStatus: '',
-            interests: [],
-            goals: '',
-            constraints: '',
-            salaryRange: '',
-            education: '',
-            location: ''
-        };
-        this.state.topCareers = [];
-        this.state.errors = {};
-        this.render();
-        this.showToast('Process restarted successfully!', 'success');
-    }
-}
-
 // Initialize the application
-let app;
-
 document.addEventListener('DOMContentLoaded', function() {
     // Check for saved theme preference
     if (localStorage.getItem('darkMode') === 'true') {
         document.body.classList.add('dark-mode');
-        document.querySelector('#themeToggle i').className = 'fas fa-sun';
+        themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+    } else {
+        themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
     }
     
-    // Initialize app
-    app = new CareerPathAI();
+    // Set up event listeners
+    themeToggle.addEventListener('click', toggleDarkMode);
+    
+    // Initialize the app
+    render();
 });
+
+// Enhanced Dark mode toggle
+function toggleDarkMode() {
+    document.body.classList.toggle('dark-mode');
+    const isDarkMode = document.body.classList.contains('dark-mode');
+    
+    if (isDarkMode) {
+        themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+        localStorage.setItem('darkMode', 'true');
+    } else {
+        themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+        localStorage.setItem('darkMode', 'false');
+    }
+    
+    // Update all elements that need dark mode
+    updateDarkModeElements(isDarkMode);
+}
+
+// Update all elements for dark mode
+function updateDarkModeElements(isDarkMode) {
+    // Update cards
+    const cards = document.querySelectorAll('.card, .career-path-card');
+    cards.forEach(card => {
+        if (isDarkMode) {
+            card.classList.add('dark:bg-gray-800');
+        } else {
+            card.classList.remove('dark:bg-gray-800');
+        }
+    });
+    
+    // Update text elements
+    const textElements = document.querySelectorAll('.dark\\:text-white, .dark\\:text-gray-300');
+    textElements.forEach(el => {
+        if (isDarkMode) {
+            el.classList.add('dark:text-white');
+        } else {
+            el.classList.remove('dark:text-white');
+        }
+    });
+    
+    // Re-render to update styles
+    render();
+}
+
+// Support modal functions
+function openSupportModal() {
+    supportModal.style.display = 'flex';
+}
+
+function closeSupportModal() {
+    supportModal.style.display = 'none';
+}
+
+function submitSupportRequest() {
+    const email = document.getElementById('supportEmail').value;
+    const supportType = document.getElementById('supportType').value;
+    const message = document.getElementById('supportMessage').value;
+    
+    if (!email || !supportType || !message) {
+        alert('Please fill in all fields');
+        return;
+    }
+    
+    // In a real application, this would send the data to a server
+    alert('Thank you for your feedback! We will get back to you soon.');
+    closeSupportModal();
+    
+    // Clear the form
+    document.getElementById('supportEmail').value = '';
+    document.getElementById('supportType').value = '';
+    document.getElementById('supportMessage').value = '';
+}
+
+// Add accuracy indicator
+function addAccuracyIndicator() {
+    // Remove existing indicator if any
+    const existingIndicator = document.querySelector('.accuracy-indicator');
+    if (existingIndicator) {
+        existingIndicator.remove();
+    }
+    
+    const indicator = document.createElement('div');
+    indicator.className = 'accuracy-indicator';
+    indicator.innerHTML = '<i class="fas fa-check-circle mr-1"></i> 95% Accuracy Guarantee';
+    document.body.appendChild(indicator);
+    
+    // Remove after 5 seconds
+    setTimeout(() => {
+        indicator.style.opacity = '0';
+        setTimeout(() => {
+            if (indicator.parentNode) {
+                indicator.parentNode.removeChild(indicator);
+            }
+        }, 1000);
+    }, 5000);
+}
+
+// Render the application based on current step
+function render() {
+    switch(state.currentStep) {
+        case 1:
+            renderSkillsStep();
+            break;
+        case 2:
+            renderInterestsStep();
+            break;
+        case 3:
+            renderGoalsStep();
+            break;
+        case 4:
+            renderResultsStep();
+            break;
+    }
+}
+
+// Validation functions
+function validateName(name) {
+    const regex = /^[a-zA-Z\s]*$/;
+    return regex.test(name) && name.length >= 2;
+}
+
+function validateEmail(email) {
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return regex.test(email);
+}
+
+function validateSkills(skills) {
+    return skills.trim().length > 0;
+}
+
+function validateStep1() {
+    const errors = {};
+    
+    if (!validateName(state.userData.name)) {
+        errors.name = "Please enter a valid name (letters and spaces only)";
+    }
+    
+    if (!validateEmail(state.userData.email)) {
+        errors.email = "Please enter a valid email address";
+    }
+    
+    if (!validateSkills(state.userData.skills)) {
+        errors.skills = "Please enter at least one skill";
+    }
+    
+    if (!state.userData.employmentStatus) {
+        errors.employmentStatus = "Please select your employment status";
+    }
+    
+    if (!state.userData.experience) {
+        errors.experience = "Please select your experience level";
+    }
+    
+    state.errors = errors;
+    return Object.keys(errors).length === 0;
+}
+
+function validateStep2() {
+    if (state.userData.interests.length === 0) {
+        state.errors.interests = "Please select at least one interest area";
+        return false;
+    }
+    
+    if (state.userData.interests.length > 5) {
+        state.errors.interests = "Please select no more than 5 interest areas";
+        return false;
+    }
+    
+    return true;
+}
+
+function validateStep3() {
+    const errors = {};
+    
+    if (!state.userData.goals.trim()) {
+        errors.goals = "Please describe your career goals";
+    }
+    
+    if (!state.userData.salaryRange) {
+        errors.salaryRange = "Please select your expected salary range";
+    }
+    
+    state.errors = errors;
+    return Object.keys(errors).length === 0;
+}
+
+// Step 1: Skills
+function renderSkillsStep() {
+    app.innerHTML = `
+        <div class="md:flex">
+            <div class="md:w-1/2 p-8">
+                <h2 class="text-2xl font-bold text-gray-800 dark:text-white mb-6">Let's plan your career path</h2>
+                
+                <div class="mb-6">
+                    <div class="flex mb-2">
+                        <div class="w-1/4">
+                            <div class="text-center p-2 bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-100 rounded-lg font-semibold">1. Skills</div>
+                        </div>
+                        <div class="w-1/4">
+                            <div class="text-center p-2 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-lg">2. Interests</div>
+                        </div>
+                        <div class="w-1/4">
+                            <div class="text-center p-2 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-lg">3. Goals</div>
+                        </div>
+                        <div class="w-1/4">
+                            <div class="text-center p-2 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-lg">4. Results</div>
+                        </div>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                        <div class="bg-blue-600 h-2.5 rounded-full progress-bar" style="width: 25%"></div>
+                    </div>
+                </div>
+                
+                <div class="space-y-4">
+                    <div class="floating-label">
+                        <input type="text" value="${state.userData.name}" oninput="updateUserData('name', event)" class="floating-input" placeholder=" ">
+                        <label class="floating-label-text">Your Name*</label>
+                        ${state.errors.name ? `<p class="error-message">${state.errors.name}</p>` : ''}
+                    </div>
+                    
+                    <div class="floating-label">
+                        <input type="email" value="${state.userData.email}" oninput="updateUserData('email', event)" class="floating-input" placeholder=" ">
+                        <label class="floating-label-text">Your Email*</label>
+                        ${state.errors.email ? `<p class="error-message">${state.errors.email}</p>` : ''}
+                    </div>
+                    
+                    <div class="floating-label">
+                        <textarea oninput="updateUserData('skills', event)" class="floating-input" rows="3" placeholder=" ">${state.userData.skills}</textarea>
+                        <label class="floating-label-text">Your Current Skills*</label>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Separate skills with commas</p>
+                        ${state.errors.skills ? `<p class="error-message">${state.errors.skills}</p>` : ''}
+                    </div>
+                    
+                    <div class="floating-label">
+                        <select onchange="updateUserData('employmentStatus', event)" class="floating-input">
+                            <option value="">Select your status</option>
+                            <option ${state.userData.employmentStatus === 'Student' ? 'selected' : ''}>Student</option>
+                            <option ${state.userData.employmentStatus === 'Fresher' ? 'selected' : ''}>Fresher (0-1 years)</option>
+                            <option ${state.userData.employmentStatus === 'Experienced' ? 'selected' : ''}>Experienced (1+ years)</option>
+                            <option ${state.userData.employmentStatus === 'Job Seeker' ? 'selected' : ''}>Job Seeker</option>
+                            <option ${state.userData.employmentStatus === 'Freelancer' ? 'selected' : ''}>Freelancer</option>
+                            <option ${state.userData.employmentStatus === 'Career Changer' ? 'selected' : ''}>Career Changer</option>
+                        </select>
+                        <label class="floating-label-text">Employment Status*</label>
+                        ${state.errors.employmentStatus ? `<p class="error-message">${state.errors.employmentStatus}</p>` : ''}
+                    </div>
+                    
+                    <div class="floating-label">
+                        <select onchange="updateUserData('experience', event)" class="floating-input">
+                            <option value="">Select experience</option>
+                            <option ${state.userData.experience === 'Fresher (0 years)' ? 'selected' : ''}>Fresher (0 years)</option>
+                            <option ${state.userData.experience === '0-1 years' ? 'selected' : ''}>0-1 years</option>
+                            <option ${state.userData.experience === '1-3 years' ? 'selected' : ''}>1-3 years</option>
+                            <option ${state.userData.experience === '3-5 years' ? 'selected' : ''}>3-5 years</option>
+                            <option ${state.userData.experience === '5-10 years' ? 'selected' : ''}>5-10 years</option>
+                            <option ${state.userData.experience === '10+ years' ? 'selected' : ''}>10+ years</option>
+                        </select>
+                        <label class="floating-label-text">Years of Experience*</label>
+                        ${state.errors.experience ? `<p class="error-message">${state.errors.experience}</p>` : ''}
+                    </div>
+                    
+                    <button onclick="validateAndProceed()" class="w-full btn-primary flex items-center justify-center">
+                        <i class="fas fa-arrow-right mr-2"></i> Continue to Interests
+                    </button>
+                </div>
+            </div>
+            
+            <div class="md:w-1/2 gradient-bg text-white p-8 flex flex-col justify-center">
+                <div class="text-center mb-6">
+                    <i class="fas fa-brain text-5xl mb-4 opacity-90"></i>
+                    <h2 class="text-2xl font-bold mb-2">AI-Powered Career Guidance</h2>
+                    <p class="opacity-90">We analyze your skills and goals to build a personalized career roadmap</p>
+                </div>
+                
+                <div class="bg-white bg-opacity-10 backdrop-filter backdrop-blur-lg rounded-xl p-4 mb-6">
+                    <h3 class="font-semibold mb-2">What you'll get:</h3>
+                    <ul class="space-y-2">
+                        <li class="flex items-start">
+                            <i class="fas fa-check-circle text-green-300 mt-1 mr-2"></i>
+                            <span>Personalized career paths matched to your profile</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-check-circle text-green-300 mt-1 mr-2"></i>
+                            <span>Skill gap analysis and learning roadmap</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-check-circle text-green-300 mt-1 mr-2"></i>
+                            <span>Job readiness score and probability matching</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-check-circle text-green-300 mt-1 mr-2"></i>
+                            <span>Weekly learning plan with curated resources</span>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="flex justify-center">
+                    <div class="bg-white rounded-lg p-3 shadow-lg w-64">
+                        <div class="text-gray-800">
+                            <div class="font-semibold mb-2">Sample Career Match</div>
+                            <div class="flex items-center mb-2">
+                                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                                    <i class="fas fa-code text-blue-600"></i>
+                                </div>
+                                <div>
+                                    <div class="font-bold">Full Stack Developer</div>
+                                    <div class="text-xs text-gray-500">85% match</div>
+                                </div>
+                            </div>
+                            <div class="flex justify-between text-xs text-gray-600">
+                                <span>Salary: ₹6-15 LPA</span>
+                                <span>Time: 6-9 months</span>
+                            </div>
+                        </div>
+                        <div class="text-xs text-gray-500 mt-2 text-center">Based on similar profiles</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+// Step 2: Interests
+function renderInterestsStep() {
+    const techInterests = ['Software Development', 'Data Science', 'UI/UX Design', 'Cloud Computing', 'Digital Marketing', 'DevOps', 'Cybersecurity', 'AI/ML Engineering'];
+    const nonTechInterests = ['Business Management', 'Healthcare', 'Education', 'Finance', 'Sales', 'Content Writing', 'Graphic Design', 'Photography', 'Music', 'Art', 'Sports', 'Fitness'];
+    
+    app.innerHTML = `
+        <div class="md:flex">
+            <div class="md:w-1/2 p-8">
+                <h2 class="text-2xl font-bold text-gray-800 dark:text-white mb-6">Your Interests & Passions</h2>
+                
+                <div class="mb-6">
+                    <div class="flex mb-2">
+                        <div class="w-1/4">
+                            <div class="text-center p-2 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-lg">1. Skills</div>
+                        </div>
+                        <div class="w-1/4">
+                            <div class="text-center p-2 bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-100 rounded-lg font-semibold">2. Interests</div>
+                        </div>
+                        <div class="w-1/4">
+                            <div class="text-center p-2 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-lg">3. Goals</div>
+                        </div>
+                        <div class="w-1/4">
+                            <div class="text-center p-2 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-lg">4. Results</div>
+                        </div>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                        <div class="bg-blue-600 h-2.5 rounded-full progress-bar" style="width: 50%"></div>
+                    </div>
+                </div>
+                
+                <div class="space-y-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">What are you passionate about? (Select up to 5)*</label>
+                        ${state.errors.interests ? `<p class="error-message">${state.errors.interests}</p>` : ''}
+                        
+                        <h3 class="font-semibold text-gray-700 dark:text-gray-300 mb-2">Tech Interests</h3>
+                        <div class="grid grid-cols-2 gap-3 mb-4">
+                            ${techInterests.map(interest => `
+                                <div class="interest-option border border-gray-300 rounded-lg p-4 text-center cursor-pointer transition-colors ${state.userData.interests.includes(interest) ? 'selected' : ''}" data-interest="${interest}">
+                                    <i class="fas ${getInterestIcon(interest)} text-2xl mb-2 text-blue-600"></i>
+                                    <div class="dark:text-white">${interest}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        
+                        <h3 class="font-semibold text-gray-700 dark:text-gray-300 mb-2">Non-Tech Interests</h3>
+                        <div class="grid grid-cols-2 gap-3 mb-4">
+                            ${nonTechInterests.map(interest => `
+                                <div class="interest-option border border-gray-300 rounded-lg p-4 text-center cursor-pointer transition-colors ${state.userData.interests.includes(interest) ? 'selected' : ''}" data-interest="${interest}">
+                                    <i class="fas ${getNonTechInterestIcon(interest)} text-2xl mb-2 text-blue-600"></i>
+                                    <div class="dark:text-white">${interest}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        
+                        <div class="custom-interest-container">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Add Custom Interest</label>
+                            <div class="custom-interest-input">
+                                <input type="text" id="customInterest" class="flex-grow px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600" placeholder="Enter your interest">
+                                <button onclick="addCustomInterest()" class="bg-blue-600 text-white px-4 py-2 rounded-lg">Add</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex gap-3">
+                        <button onclick="prevStep()" class="w-1/3 btn-secondary flex items-center justify-center">
+                            <i class="fas fa-arrow-left mr-2"></i> Back
+                        </button>
+                        <button onclick="validateInterestsAndProceed()" class="w-2/3 btn-primary flex items-center justify-center">
+                            Continue to Goals <i class="fas fa-arrow-right ml-2"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="md:w-1/2 gradient-bg text-white p-8 flex flex-col justify-center">
+                <div class="text-center mb-6">
+                    <i class="fas fa-lightbulb text-5xl mb-4 opacity-90"></i>
+                    <h2 class="text-2xl font-bold mb-2">Follow Your Passions</h2>
+                    <p class="opacity-90">Your interests help us recommend careers you'll truly enjoy</p>
+                </div>
+                
+                <div class="bg-white bg-opacity-10 backdrop-filter backdrop-blur-lg rounded-xl p-4 mb-6">
+                    <h3 class="font-semibold mb-2">Why interests matter:</h3>
+                    <ul class="space-y-2">
+                        <li class="flex items-start">
+                            <i class="fas fa-check-circle text-green-300 mt-1 mr-2"></i>
+                            <span>People who work in fields they're passionate about report higher job satisfaction</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-check-circle text-green-300 mt-1 mr-2"></i>
+                            <span>Interest alignment leads to better long-term career growth</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-check-circle text-green-300 mt-1 mr-2"></i>
+                            <span>You're more likely to excel in areas that genuinely interest you</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Add event listeners to interest options
+    setTimeout(() => {
+        const options = document.querySelectorAll('.interest-option');
+        options.forEach(option => {
+            option.addEventListener('click', function() {
+                const interest = this.getAttribute('data-interest');
+                
+                if (state.userData.interests.includes(interest)) {
+                    // Remove if already selected
+                    state.userData.interests = state.userData.interests.filter(i => i !== interest);
+                    this.classList.remove('selected');
+                } else {
+                    // Add if not selected and less than 5
+                    if (state.userData.interests.length < 5) {
+                        state.userData.interests.push(interest);
+                        this.classList.add('selected');
+                    } else {
+                        alert("You can select up to 5 interests only");
+                    }
+                }
+            });
+        });
+    }, 100);
+}
+
+// Add custom interest
+function addCustomInterest() {
+    const customInterestInput = document.getElementById('customInterest');
+    const customInterest = customInterestInput.value.trim();
+    
+    if (!customInterest) {
+        alert("Please enter an interest");
+        return;
+    }
+    
+    if (state.userData.interests.includes(customInterest)) {
+        alert("This interest is already added");
+        return;
+    }
+    
+    if (state.userData.interests.length >= 5) {
+        alert("You can select up to 5 interests only");
+        return;
+    }
+    
+    state.userData.interests.push(customInterest);
+    customInterestInput.value = '';
+    
+    // Re-render to show the updated interests
+    renderInterestsStep();
+}
+
+// Step 3: Goals
+function renderGoalsStep() {
+    app.innerHTML = `
+        <div class="md:flex">
+            <div class="md:w-1/2 p-8">
+                <h2 class="text-2xl font-bold text-gray-800 dark:text-white mb-6">Your Career Goals</h2>
+                
+                <div class="mb-6">
+                    <div class="flex mb-2">
+                        <div class="w-1/4">
+                            <div class="text-center p-2 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-lg">1. Skills</div>
+                        </div>
+                        <div class="w-1/4">
+                            <div class="text-center p-2 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-lg">2. Interests</div>
+                        </div>
+                        <div class="w-1/4">
+                            <div class="text-center p-2 bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-100 rounded-lg font-semibold">3. Goals</div>
+                        </div>
+                        <div class="w-1/4">
+                            <div class="text-center p-2 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-lg">4. Results</div>
+                        </div>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                        <div class="bg-blue-600 h-2.5 rounded-full progress-bar" style="width: 75%"></div>
+                    </div>
+                </div>
+                
+                <div class="space-y-6">
+                    <div class="floating-label">
+                        <textarea oninput="updateUserData('goals', event)" class="floating-input" rows="3" placeholder=" ">${state.userData.goals}</textarea>
+                        <label class="floating-label-text">Career Goals*</label>
+                        ${state.errors.goals ? `<p class="error-message">${state.errors.goals}</p>` : ''}
+                    </div>
+                    
+                    <div class="floating-label">
+                        <textarea oninput="updateUserData('constraints', event)" class="floating-input" rows="2" placeholder=" ">${state.userData.constraints}</textarea>
+                        <label class="floating-label-text">Constraints (time, location, etc.)</label>
+                    </div>
+                    
+                    <div class="floating-label">
+                        <select onchange="updateUserData('salaryRange', event)" class="floating-input">
+                            <option value="">Select expected salary</option>
+                            <option ${state.userData.salaryRange === 'Under ₹3 LPA' ? 'selected' : ''}>Under ₹3 LPA</option>
+                            <option ${state.userData.salaryRange === '₹3-5 LPA' ? 'selected' : ''}>₹3-5 LPA</option>
+                            <option ${state.userData.salaryRange === '₹5-7 LPA' ? 'selected' : ''}>₹5-7 LPA</option>
+                            <option ${state.userData.salaryRange === '₹7-10 LPA' ? 'selected' : ''}>₹7-10 LPA</option>
+                            <option ${state.userData.salaryRange === '₹10-15 LPA' ? 'selected' : ''}>₹10-15 LPA</option>
+                            <option ${state.userData.salaryRange === '₹15-20 LPA' ? 'selected' : ''}>₹15-20 LPA</option>
+                            <option ${state.userData.salaryRange === '₹20+ LPA' ? 'selected' : ''}>₹20+ LPA</option>
+                        </select>
+                        <label class="floating-label-text">Target Salary Range (INR)*</label>
+                        ${state.errors.salaryRange ? `<p class="error-message">${state.errors.salaryRange}</p>` : ''}
+                    </div>
+                    
+                    <div class="flex gap-3">
+                        <button onclick="prevStep()" class="w-1/3 btn-secondary flex items-center justify-center">
+                            <i class="fas fa-arrow-left mr-2"></i> Back
+                        </button>
+                        <button onclick="validateGoalsAndGenerate()" class="w-2/3 btn-primary flex items-center justify-center">
+                            Generate Results <i class="fas fa-bolt ml-2"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="md:w-1/2 gradient-bg text-white p-8 flex flex-col justify-center">
+                <div class="text-center mb-6">
+                    <i class="fas fa-bullseye text-5xl mb-4 opacity-90"></i>
+                    <h2 class="text-2xl font-bold mb-2">Set Clear Goals</h2>
+                    <p class="opacity-90">Define what success looks like for your career journey</p>
+                </div>
+                
+                <div class="bg-white bg-opacity-10 backdrop-filter backdrop-blur-lg rounded-xl p-4 mb-6">
+                    <h3 class="font-semibold mb-2">Realistic planning:</h3>
+                    <ul class="space-y-2">
+                        <li class="flex items-start">
+                            <i class="fas fa-check-circle text-green-300 mt-1 mr-2"></i>
+                            <span>Be specific about your timeline and constraints</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-check-circle text-green-300 mt-1 mr-2"></i>
+                            <span>Consider your financial needs and salary expectations</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-check-circle text-green-300 mt-1 mr-2"></i>
+                            <span>We'll create a personalized plan based on your goals</span>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="flex justify-center">
+                    <div class="bg-white rounded-lg p-3 shadow-lg w-64">
+                        <div class="text-gray-800">
+                            <div class="font-semibold mb-2">Sample Timeline</div>
+                            <div class="space-y-2">
+                                <div class="flex justify-between">
+                                    <span>Learning Foundation</span>
+                                    <span>3 months</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>Projects & Portfolio</span>
+                                    <span>2 months</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>Job Search</span>
+                                    <span>1-2 months</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+// Step 4: Results
+function renderResultsStep() {
+    // Guard if nothing loaded
+    const haveCareers = Array.isArray(state.topCareers) && state.topCareers.length > 0;
+    const firstCareer = haveCareers ? state.topCareers[0] : null;
+    const missingSkillsList = firstCareer?.missingSkills || [];
+
+    // Small source badge text + style — tiny, unobtrusive, no layout changes
+    const sourceBadge = state.apiSource === 'gemini'
+        ? `<span class="ml-3 inline-flex items-center text-xs px-2 py-1 rounded-full bg-green-100 text-green-700 border border-green-200" title="Results are live from Gemini API">Live from Gemini</span>`
+        : state.apiSource === 'fallback'
+            ? `<span class="ml-3 inline-flex items-center text-xs px-2 py-1 rounded-full bg-yellow-100 text-yellow-800 border border-yellow-200" title="Fallback expert analysis used because API was unavailable">Fallback: Expert analysis</span>`
+            : '';
+
+    app.innerHTML = `
+        <div class="p-8">
+            <h2 class="text-2xl font-bold text-gray-800 dark:text-white mb-6 flex items-center">${state.userData.name}'s Personalized Career Plan ${sourceBadge}</h2>
+            
+            <div class="mb-6">
+                <div class="flex mb-2">
+                    <div class="w-1/4">
+                        <div class="text-center p-2 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-lg">1. Skills</div>
+                    </div>
+                    <div class="w-1/4">
+                        <div class="text-center p-2 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-lg">2. Interests</div>
+                    </div>
+                    <div class="w-1/4">
+                        <div class="text-center p-2 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-lg">3. Goals</div>
+                    </div>
+                    <div class="w-1/4">
+                        <div class="text-center p-2 bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-100 rounded-lg font-semibold">4. Results</div>
+                    </div>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2.5">
+                    <div class="bg-blue-600 h-2.5 rounded-full progress-bar" style="width: 100%"></div>
+                </div>
+            </div>
+            
+            <!-- User Summary Section -->
+            <div class="summary-box mb-8">
+                <h3 class="summary-title">Personalized Career Analysis for ${state.userData.name}</h3>
+                <div class="summary-content">
+                    <p>Based on your skills in <strong>${state.userData.skills.split(',').slice(0, 3).join(', ')}</strong>, 
+                    interest in <strong>${state.userData.interests.join(' and ')}</strong>, and career goals of 
+                    <strong>${state.userData.goals.substring(0, 100)}${state.userData.goals.length > 100 ? '...' : ''}</strong>, 
+                    we've identified the following career paths that align with your profile and current market trends.</p>
+                    
+                    <p class="mt-2">Your target salary range of <strong>${state.userData.salaryRange}</strong> is achievable 
+                    in these fields with the right skill development.</p>
+                </div>
+            </div>
+            
+            ${haveCareers ? `
+            <div class="grid md:grid-cols-3 gap-6 mb-8">
+                ${state.topCareers.map((career, index) => `
+                    <div class="career-path-card bg-white dark:bg-gray-800 p-5 rounded-lg shadow-md animate-card" style="animation-delay: ${index * 0.1}s">
+                        <div class="flex items-center mb-4">
+                            <div class="w-12 h-12 ${index === 0 ? 'bg-blue-100 dark:bg-blue-900' : index === 1 ? 'bg-green-100 dark:bg-green-900' : 'bg-purple-100 dark:bg-purple-900'} rounded-lg flex items-center justify-center mr-3">
+                                <i class="fas ${getCareerIcon(career.career)} ${index === 0 ? 'text-blue-600 dark:text-blue-300' : index === 1 ? 'text-green-600 dark:text-green-300' : 'text-purple-600 dark:text-purple-300'}"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold dark:text-white">${career.career}</h3>
+                                <div class="text-xs ${index === 0 ? 'text-blue-600 dark:text-blue-300' : index === 1 ? 'text-green-600 dark:text-green-300' : 'text-purple-600 dark:text-purple-300'}">${career.match}% Match</div>
+                            </div>
+                        </div>
+                        <p class="text-sm text-gray-600 dark:text-gray-300 mb-4">${career.description || 'Build a successful career in this high-demand field'}</p>
+                        <div class="mb-4">
+                            <div class="flex justify-between text-xs mb-1 dark:text-gray-300">
+                                <span>Salary Range</span>
+                                <span>${career.salary}</span>
+                            </div>
+                            <div class="flex justify-between text-xs mb-1 dark:text-gray-300">
+                                <span>Market Demand</span>
+                                <span>${career.demand}</span>
+                            </div>
+                            <div class="flex justify-between text-xs dark:text-gray-300">
+                                <span>Growth</span>
+                                <span>${career.growth}</span>
+                            </div>
+                        </div>
+                        ${career.freelancing ? `<div class="text-xs text-green-600 dark:text-green-400 mb-2"><i class="fas fa-check-circle"></i> Freelancing opportunities available</div>` : ''}
+                        <div class="text-xs text-gray-500 dark:text-gray-400 mb-3">Trend: ${career.trend}</div>
+                        <button onclick="showCareerDetails('${career.career}')" class="w-full ${index === 0 ? 'bg-blue-50 dark:bg-blue-900 text-blue-600 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-800' : index === 1 ? 'bg-green-50 dark:bg-green-900 text-green-600 dark:text-green-300 hover:bg-green-100 dark:hover:bg-green-800' : 'bg-purple-50 dark:bg-purple-900 text-purple-600 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-800'} py-2 rounded-lg text-sm font-semibold transition-colors">View Details</button>
+                    </div>
+                `).join('')}
+            </div>
+            
+            <div class="bg-gray-50 dark:bg-gray-700 p-6 rounded-lg mb-8">
+                <h3 class="font-bold text-lg mb-4 dark:text-white">Your Skill Gap Analysis</h3>
+                ${missingSkillsList.map((skill, i) => `
+                    <div class="mb-4 animate-skill" style="animation-delay: ${i * 0.1}s">
+                        <div class="flex justify-between mb-1 dark:text-white">
+                            <span class="font-medium">${skill}</span>
+                            <span class="text-blue-600 dark:text-blue-300 font-semibold">0%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2.5">
+                            <div class="bg-blue-600 h-2.5 rounded-full skill-bar" style="width: 0%"></div>
+                        </div>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Critical skill for ${firstCareer?.career || 'this path'}. Consider learning through online courses.</p>
+                    </div>
+                `).join('')}
+                <div class="mt-6 p-4 bg-blue-50 dark:bg-blue-900 rounded-lg">
+                    <h4 class="font-semibold text-blue-800 dark:text-blue-200 mb-2">Skill Improvement Strategy</h4>
+                    <p class="text-sm text-blue-700 dark:text-blue-300">Based on your current skills, we recommend focusing on ${missingSkillsList.slice(0, 2).join(' and ') || 'foundational skills'} first, as these are fundamental to your chosen career path.</p>
+                </div>
+            </div>
+            
+            <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md mb-8">
+                <h3 class="font-bold text-lg mb-4 dark:text-white">12-Week Learning Plan</h3>
+                <div class="space-y-4">
+                    <div class="flex items-start">
+                        <div class="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs font-semibold px-2 py-1 rounded mr-3">Weeks 1-4</div>
+                        <div>
+                            <div class="font-semibold dark:text-white">Foundational Skills</div>
+                            <div class="text-sm text-gray-600 dark:text-gray-300">Focus on ${missingSkillsList.slice(0, 2).join(' and ') || 'core fundamentals'}</div>
+                        </div>
+                    </div>
+                    <div class="flex items-start">
+                        <div class="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 text-xs font-semibold px-2 py-1 rounded mr-3">Weeks 5-8</div>
+                        <div>
+                            <div class="font-semibold dark:text-white">Intermediate Concepts</div>
+                            <div class="text-sm text-gray-600 dark:text-gray-300">Build projects using ${missingSkillsList.slice(2, 4).join(' and ') || 'practical exercises'}</div>
+                        </div>
+                    </div>
+                    <div class="flex items-start">
+                        <div class="bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 text-xs font-semibold px-2 py-1 rounded mr-3">Weeks 9-12</div>
+                        <div>
+                            <div class="font-semibold dark:text-white">Portfolio Development</div>
+                            <div class="text-sm text-gray-600 dark:text-gray-300">Create a portfolio showcasing your new skills</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            ` : `
+            <div class="p-6 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-800">
+                No results found. Please go back and try again.
+            </div>`}
+            
+            <div class="flex gap-4 flex-wrap">
+                <button onclick="generatePDF()" class="download-btn px-6 py-3 text-white rounded-lg flex items-center">
+                    <i class="fas fa-file-pdf mr-2"></i> Export PDF Plan
+                </button>
+                <button onclick="openShareModal()" class="bg-gray-200 dark:bg-gray-700 px-6 py-3 text-gray-800 dark:text-white rounded-lg flex items-center">
+                    <i class="fas fa-share-alt mr-2"></i> Share Results
+                </button>
+                <button onclick="restartProcess()" class="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 px-6 py-3 text-gray-800 dark:text-white rounded-lg flex items-center">
+                    <i class="fas fa-redo mr-2"></i> Start Over
+                </button>
+            </div>
+        </div>
+    `;
+
+    // Animate skill bars after a short delay
+    setTimeout(() => {
+        document.querySelectorAll('.skill-bar').forEach(bar => {
+            bar.style.width = '0%';
+        });
+    }, 500);
+}
+
+// Helper functions
+function getInterestIcon(interest) {
+    const icons = {
+        'Software Development': 'fa-laptop-code',
+        'Data Science': 'fa-chart-line',
+        'UI/UX Design': 'fa-paint-brush',
+        'Cloud Computing': 'fa-cloud',
+        'Digital Marketing': 'fa-bullhorn',
+        'DevOps': 'fa-code-branch',
+        'Cybersecurity': 'fa-shield-alt',
+        'AI/ML Engineering': 'fa-robot'
+    };
+    return icons[interest] || 'fa-star';
+}
+
+function getNonTechInterestIcon(interest) {
+    const icons = {
+        'Business Management': 'fa-briefcase',
+        'Healthcare': 'fa-heartbeat',
+        'Education': 'fa-graduation-cap',
+        'Finance': 'fa-chart-line',
+        'Sales': 'fa-handshake',
+        'Content Writing': 'fa-pen',
+        'Graphic Design': 'fa-palette',
+        'Photography': 'fa-camera',
+        'Music': 'fa-music',
+        'Art': 'fa-paint-brush',
+        'Sports': 'fa-running',
+        'Fitness': 'fa-dumbbell'
+    };
+    return icons[interest] || 'fa-heart';
+}
+
+function getCareerIcon(career) {
+    const icons = {
+        'Full Stack Developer': 'fa-code',
+        'Data Scientist': 'fa-chart-line',
+        'UX/UI Designer': 'fa-paint-brush',
+        'Cloud Engineer': 'fa-cloud',
+        'DevOps Engineer': 'fa-code-branch',
+        'Digital Marketer': 'fa-bullhorn',
+        'Cybersecurity Analyst': 'fa-shield-alt',
+        'AI/ML Engineer': 'fa-robot',
+        'Front-End Developer': 'fa-laptop-code',
+        'Junior Security Analyst': 'fa-user-shield'
+    };
+    return icons[career] || 'fa-briefcase';
+}
+
+// Function to show different steps in modal
+function showStepInModal(step) {
+    state.currentModalStep = step;
+    updateModalContent();
+}
+
+// Function to update modal content based on selected step
+function updateModalContent() {
+    switch(state.currentModalStep) {
+        case 1:
+            showSkillsInModal();
+            break;
+        case 2:
+            showInterestsInModal();
+            break;
+        case 3:
+            showGoalsInModal();
+            break;
+        case 4:
+            showCareerDetailsInModal(state.currentCareer.career);
+            break;
+    }
+}
+
+// Functions to show user data in modal
+function showSkillsInModal() {
+    modalTitle.textContent = "Your Skills";
+    modalContent.innerHTML = `
+        <div class="space-y-4">
+            <div>
+                <h3 class="font-semibold text-lg mb-2 dark:text-white">Skills Summary</h3>
+                <p class="text-gray-700 dark:text-gray-300">${state.userData.skills}</p>
+            </div>
+            <div>
+                <h3 class="font-semibold text-lg mb-2 dark:text-white">Experience Level</h3>
+                <p class="text-gray-700 dark:text-gray-300">${state.userData.experience}</p>
+            </div>
+            <div>
+                <h3 class="font-semibold text-lg mb-2 dark:text-white">Employment Status</h3>
+                <p class="text-gray-700 dark:text-gray-300">${state.userData.employmentStatus}</p>
+            </div>
+        </div>
+    `;
+}
+
+function showInterestsInModal() {
+    modalTitle.textContent = "Your Interests";
+    modalContent.innerHTML = `
+        <div class="space-y-4">
+            <h3 class="font-semibold text-lg mb-2 dark:text-white">Areas of Interest</h3>
+            <div class="flex flex-wrap gap-2">
+                ${state.userData.interests.map(interest => `
+                    <span class="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-3 py-1 rounded-full text-sm">${interest}</span>
+                `).join('')}
+            </div>
+        </div>
+    `;
+}
+
+function showGoalsInModal() {
+    modalTitle.textContent = "Your Goals";
+    modalContent.innerHTML = `
+        <div class="space-y-4">
+            <div>
+                <h3 class="font-semibold text-lg mb-2 dark:text-white">Career Goals</h3>
+                <p class="text-gray-700 dark:text-gray-300">${state.userData.goals}</p>
+            </div>
+            <div>
+                <h3 class="font-semibold text-lg mb-2 dark:text-white">Constraints</h3>
+                <p class="text-gray-700 dark:text-gray-300">${state.userData.constraints || 'Not specified'}</p>
+            </div>
+            <div>
+                <h3 class="font-semibold text-lg mb-2 dark:text-white">Salary Expectations</h3>
+                <p class="text-gray-700 dark:text-gray-300">${state.userData.salaryRange}</p>
+            </div>
+        </div>
+    `;
+}
+
+// Show career details in modal
+function showCareerDetails(careerName) {
+    state.currentModalStep = 4;
+    const career = careerTrends[careerName] || state.topCareers.find(c => c.career === careerName);
+    state.currentCareer = career;
+    
+    // Find the index of this career in topCareers for navigation
+    state.currentCareerIndex = state.topCareers.findIndex(c => c.career === careerName);
+    
+    showCareerDetailsInModal(careerName);
+}
+
+function showCareerDetailsInModal(careerName) {
+    const career = careerTrends[careerName] || state.topCareers.find(c => c.career === careerName);
+    const userSkills = state.userData.skills.split(',').map(skill => skill.trim().toLowerCase());
+    const requiredSkills = career.skills ? career.skills.map(skill => skill.toLowerCase()) : [];
+    
+    // Check if user is interested in freelancing or job seeking
+    const isFreelancer = state.userData.employmentStatus === 'Freelancer';
+    const isJobSeeker = state.userData.employmentStatus === 'Job Seeker';
+    
+    modalTitle.textContent = careerName;
+    
+    modalContent.innerHTML = `
+        <div class="space-y-6">
+            <div class="bg-blue-50 dark:bg-blue-900 p-4 rounded-lg">
+                <h3 class="font-semibold text-blue-800 dark:text-blue-200 mb-2">Why This Career Fits You</h3>
+                <p class="text-blue-700 dark:text-blue-300">
+                    Based on your skills in ${state.userData.skills.split(',').slice(0, 3).join(', ')} 
+                    and interest in ${state.userData.interests.join(' and ')}, this career path aligns well with your profile. 
+                    The ${careerName} role offers opportunities that match your salary expectations of ${state.userData.salaryRange}.
+                </p>
+            </div>
+            
+            <div>
+                <h3 class="font-semibold text-lg mb-2 dark:text-white">Career Overview</h3>
+                <p class="text-gray-700 dark:text-gray-300">${career.description || 'A promising career path with good growth potential.'}</p>
+            </div>
+            
+            <div class="grid md:grid-cols-2 gap-4">
+                <div class="bg-blue-50 dark:bg-blue-900 p-4 rounded-lg">
+                    <h4 class="font-semibold text-blue-800 dark:text-blue-200 mb-2">Market Information</h4>
+                    <p class="text-sm dark:text-blue-300"><span class="font-medium">Demand:</span> ${career.demand || 'High'}</p>
+                    <p class="text-sm dark:text-blue-300"><span class="font-medium">Growth:</span> ${career.growth || '15% by 2029'}</p>
+                    <p class="text-sm dark:text-blue-300"><span class="font-medium">Salary Range:</span> ${career.salary || '₹5-12 LPA'}</p>
+                </div>
+                
+                <div class="bg-green-50 dark:bg-green-900 p-4 rounded-lg">
+                    <h4 class="font-semibold text-green-800 dark:text-green-200 mb-2">Current Trend</h4>
+                    <p class="text-sm dark:text-green-300">${career.trend || 'Growing demand in the industry'}</p>
+                </div>
+            </div>
+            
+            ${requiredSkills.length > 0 ? `
+            <div>
+                <h3 class="font-semibold text-lg mb-3 dark:text-white">Required Skills</h3>
+                <div class="space-y-3">
+                    ${requiredSkills.map(skill => {
+                        const hasSkill = userSkills.some(userSkill => 
+                            userSkill.includes(skill.toLowerCase()) || skill.toLowerCase().includes(userSkill)
+                        );
+                        
+                        return `
+                            <div class="flex items-center justify-between p-3 ${hasSkill ? 'bg-green-50 dark:bg-green-900' : 'bg-red-50 dark:bg-red-900'} rounded-lg">
+                                <span class="font-medium dark:text-white">${skill}</span>
+                                <span class="text-sm ${hasSkill ? 'text-green-600 dark:text-green-300' : 'text-red-600 dark:text-red-300'}">
+                                    ${hasSkill ? '✓ You have this skill' : '✗ You need to learn this'}
+                                </span>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            </div>
+            ` : ''}
+            
+            ${career.resources && career.resources.length > 0 ? `
+            <div>
+                <h3 class="font-semibold text-lg mb-3 dark:text-white">Learning Resources</h3>
+                <p class="text-gray-700 dark:text-gray-300 mb-3">Learn the skills you need for this career path:</p>
+                <div class="space-y-3">
+                    ${career.resources.map(resource => `
+                        <a href="${resource.link}" target="_blank" class="resource-card bg-gray-50 dark:bg-gray-700 p-4 rounded-lg block hover:bg-gray-100 dark:hover:bg-gray-600">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h4 class="font-semibold dark:text-white">${resource.name}</h4>
+                                    <p class="text-sm text-gray-600 dark:text-gray-300">${resource.provider} • ${resource.type} • ${resource.duration}</p>
+                                </div>
+                                <span class="resource-badge ${resource.free ? 'free' : 'paid'}">${resource.free ? 'Free' : 'Paid'}</span>
+                            </div>
+                        </a>
+                    `).join('')}
+                </div>
+            </div>
+            ` : `
+            <div>
+                <h3 class="font-semibold text-lg mb-3 dark:text-white">Learning Resources</h3>
+                <p class="text-gray-700 dark:text-gray-300">Check out these platforms for learning resources:</p>
+                <div class="mt-3 space-y-2">
+                    <a href="https://www.coursera.org" target="_blank" class="resource-card bg-gray-50 dark:bg-gray-700 p-4 rounded-lg block hover:bg-gray-100 dark:hover:bg-gray-600">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h4 class="font-semibold dark:text-white">Coursera</h4>
+                                <p class="text-sm text-gray-600 dark:text-gray-300">Online courses • Professional Certificates • Degrees</p>
+                            </div>
+                            <span class="resource-badge paid">Paid</span>
+                        </div>
+                    </a>
+                    <a href="https://www.udemy.com" target="_blank" class="resource-card bg-gray-50 dark:bg-gray-700 p-4 rounded-lg block hover:bg-gray-100 dark:hover:bg-gray-600">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h4 class="font-semibold dark:text-white">Udemy</h4>
+                                <p class="text-sm text-gray-600 dark:text-gray-300">Video courses • Hands-on projects • Lifetime access</p>
+                            </div>
+                            <span class="resource-badge paid">Paid</span>
+                        </div>
+                    </a>
+                    <a href="https://www.freecodecamp.org" target="_blank" class="resource-card bg-gray-50 dark:bg-gray-700 p-4 rounded-lg block hover:bg-gray-100 dark:hover:bg-gray-600">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h4 class="font-semibold dark:text-white">freeCodeCamp</h4>
+                                <p class="text-sm text-gray-600 dark:text-gray-300">Coding challenges • Projects • Certifications</p>
+                            </div>
+                            <span class="resource-badge free">Free</span>
+                        </div>
+                    </a>
+                </div>
+            </div>
+            `}
+            
+            ${(isFreelancer && career.freelancing) ? `
+            <div>
+                <h3 class="font-semibold text-lg mb-2 dark:text-white">Freelancing Opportunities</h3>
+                <p class="text-gray-700 dark:text-gray-300 mb-2">This career has good freelancing potential. You can find work on these platforms:</p>
+                <div class="flex flex-wrap gap-2">
+                    ${career.freelancingPlatforms.map(platform => `
+                        <a href="${getFreelancingPlatformLink(platform)}" target="_blank" class="bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 text-xs font-medium px-2 py-1 rounded hover:underline">${platform}</a>
+                    `).join('')}
+                </div>
+            </div>
+            ` : ''}
+            
+            ${isJobSeeker ? `
+            <div>
+                <h3 class="font-semibold text-lg mb-2 dark:text-white">Job Opportunities</h3>
+                <p class="text-gray-700 dark:text-gray-300 mb-2">You can find job opportunities for ${careerName} roles on these platforms:</p>
+                <div class="flex flex-wrap gap-2">
+                    <a href="https://www.linkedin.com/jobs" target="_blank" class="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs font-medium px-2 py-1 rounded hover:underline">LinkedIn Jobs</a>
+                    <a href="https://www.naukri.com" target="_blank" class="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs font-medium px-2 py-1 rounded hover:underline">Naukri.com</a>
+                    <a href="https://www.indeed.com" target="_blank" class="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs font-medium px-2 py-1 rounded hover:underline">Indeed</a>
+                    <a href="https://www.glassdoor.com" target="_blank" class="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs font-medium px-2 py-1 rounded hover:underline">Glassdoor</a>
+                </div>
+                
+                ${career.companies && career.companies.length > 0 ? `
+                <p class="text-gray-700 dark:text-gray-300 mt-3 mb-2">Companies currently hiring for this role:</p>
+                <div class="flex flex-wrap gap-2">
+                    ${career.companies.map(company => `
+                        <span class="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 text-xs font-medium px-2 py-1 rounded">${company}</span>
+                    `).join('')}
+                </div>
+                ` : ''}
+            </div>
+            ` : ''}
+            
+            ${career.learningPath ? `
+            <div>
+                <h3 class="font-semibold text-lg mb-2 dark:text-white">Learning Path</h3>
+                <p class="text-gray-700 dark:text-gray-300">${career.learningPath}</p>
+            </div>
+            ` : ''}
+        </div>
+    `;
+    
+    careerModal.style.display = 'flex';
+}
+
+// Get freelancing platform links
+function getFreelancingPlatformLink(platform) {
+    const links = {
+        'Upwork': 'https://www.upwork.com',
+        'Freelancer': 'https://www.freelancer.com',
+        'Fiverr': 'https://www.fiverr.com',
+        'Toptal': 'https://www.toptal.com',
+        'PeoplePerHour': 'https://www.peopleperhour.com',
+        '99designs': 'https://99designs.com',
+        'HackerOne': 'https://www.hackerone.com',
+        'Bugcrowd': 'https://www.bugcrowd.com',
+        'Kaggle': 'https://www.kaggle.com'
+    };
+    
+    return links[platform] || '#';
+}
+
+// Close modal
+function closeModal() {
+    careerModal.style.display = 'none';
+}
+
+// Share modal functions
+function openShareModal() {
+    // Generate a shareable link
+    document.getElementById('shareableLink').value = window.location.href;
+    shareModal.style.display = 'flex';
+}
+
+function closeShareModal() {
+    shareModal.style.display = 'none';
+}
+
+function shareOnWhatsApp() {
+    const text = `Check out my career path recommendations from CareerPath AI!`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(text + ' ' + window.location.href)}`, '_blank');
+}
+
+function shareOnTelegram() {
+    const text = `Check out my career path recommendations from CareerPath AI!`;
+    window.open(`https://t.me/share/url?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(text)}`, '_blank');
+}
+
+function shareOnTwitter() {
+    const text = `Check out my career path recommendations from CareerPath AI!`;
+    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(window.location.href)}`, '_blank');
+}
+
+function shareOnLinkedIn() {
+    window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.href)}`, '_blank');
+}
+
+function shareOnFacebook() {
+    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`, '_blank');
+}
+
+function copyShareLink() {
+    const linkInput = document.getElementById('shareableLink');
+    linkInput.select();
+    document.execCommand('copy');
+    alert('Link copied to clipboard!');
+}
+
+// Update user data in state
+function updateUserData(field, event) {
+    state.userData[field] = event.target.value;
+    // Clear error when user starts typing
+    if (state.errors[field]) {
+        delete state.errors[field];
+        render();
+    }
+}
+
+// Navigation functions
+function nextStep() {
+    if (state.currentStep < state.totalSteps) {
+        state.currentStep++;
+        render();
+    }
+}
+
+function prevStep() {
+    if (state.currentStep > 1) {
+        state.currentStep--;
+        state.errors = {};
+        render();
+    }
+}
+
+function goToStep(step) {
+    if (step >= 1 && step <= state.totalSteps) {
+        state.currentStep = step;
+        state.errors = {};
+        render();
+    }
+}
+
+function validateAndProceed() {
+    if (validateStep1()) {
+        nextStep();
+    } else {
+        render();
+    }
+}
+
+function validateInterestsAndProceed() {
+    if (validateStep2()) {
+        nextStep();
+    } else {
+        render();
+    }
+}
+
+function validateGoalsAndGenerate() {
+    if (validateStep3()) {
+        generateResults();
+    } else {
+        render();
+    }
+}
+
+// Call Gemini API for career recommendations (using serverless function)
+async function callGeminiAPI(userData) {
+    try {
+        const response = await fetch('/api/getCareerAdvice', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ userData: userData })
+        });
+
+        if (!response.ok) {
+            throw new Error(`Server error: ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        // Validate the API response for accuracy
+        if (data.careers && Array.isArray(data.careers)) {
+            data.careers.forEach(career => {
+                // Ensure match percentage is realistic based on skills
+                const realisticMatch = calculateSkillMatch(userData.skills, career.requiredSkills || []);
+                career.match = Math.min(career.match, realisticMatch);
+                
+                // Ensure salary range is realistic
+                if (career.salary) {
+                    career.salary = validateSalaryRange(career.salary);
+                }
+            });
+            
+            // Sort by match percentage
+            data.careers.sort((a, b) => b.match - a.match);
+            
+            // Show accuracy indicator
+            addAccuracyIndicator();
+        }
+        
+        return data;
+    } catch (error) {
+        console.error('Error calling API:', error);
+        throw error;
+    }
+}
+
+// Generate results using Gemini API
+async function generateResults() {
+    // Show loading state
+    app.innerHTML = `
+        <div class="p-8 text-center">
+            <div class="flex justify-center mb-6">
+                <div class="loading-spinner"></div>
+            </div>
+            <h2 class="text-2xl font-bold text-gray-800 dark:text-white mb-2">Generating Your Career Plan</h2>
+            <p class="text-gray-600 dark:text-gray-300">Analyzing your skills against current market trends using Gemini AI...</p>
+        </div>
+    `;
+    
+    try {
+        // Call Gemini API
+        const apiPayload = await callGeminiAPI(state.userData);
+        const careers = apiPayload?.careers;
+
+        if (!Array.isArray(careers)) {
+            throw new Error('Invalid API response shape: "careers" not found');
+        }
+
+        // Enhanced combination of Gemini results with our career trends data
+        const combinedResults = careers.map(result => {
+            // Try to find a matching career in our trends data
+            const careerKey = Object.keys(careerTrends).find(key => 
+                key.toLowerCase().includes(result.career.toLowerCase()) || 
+                result.career.toLowerCase().includes(key.toLowerCase())
+            );
+            
+            const careerData = careerTrends[careerKey] || {};
+            
+            return {
+                // Start with our known career data
+                ...careerData,
+                // Override with API results
+                ...result,
+                // Ensure we have all required fields with fallbacks
+                career: result.career || careerData.career || "Tech Professional",
+                salary: result.salary || careerData.salary || "₹5-12 LPA",
+                demand: result.demand || careerData.demand || "High",
+                growth: result.growth || careerData.growth || "15% by 2029",
+                description: result.description || careerData.description || "A promising career path with good growth potential.",
+                trend: result.trend || careerData.trend || "Growing field with opportunities",
+                // Handle missing skills
+                missingSkills: result.missingSkills || careerData.skills?.filter(s => {
+                    const userSkills = state.userData.skills.toLowerCase();
+                    return !userSkills.includes(String(s).toLowerCase());
+                }) || [],
+                // Preserve resources, companies, learningPath, freelancing data
+                resources: careerData.resources || [],
+                companies: careerData.companies || [],
+                learningPath: careerData.learningPath || "",
+                freelancing: careerData.freelancing || false,
+                freelancingPlatforms: careerData.freelancingPlatforms || []
+            };
+        });
+
+        state.topCareers = combinedResults;
+        state.apiSource = 'gemini';
+        state.currentStep = 4;
+        render();
+    } catch (error) {
+        console.error("Error generating results with Gemini:", error);
+        
+        // Fallback to static analysis if API fails
+        alert("API is not responding. Using our expert analysis instead.");
+        generateFallbackResults();
+    }
+}
+
+// Fallback results generation
+function generateFallbackResults() {
+    const userSkills = state.userData.skills.split(',').map(skill => skill.trim().toLowerCase());
+    
+    // Calculate match scores for each career
+    const careerMatches = Object.keys(careerTrends).map(career => {
+        const requiredSkills = careerTrends[career].skills.map(skill => skill.toLowerCase());
+        
+        // More accurate skill matching
+        const matchedSkills = requiredSkills.filter(skill => 
+            userSkills.some(userSkill => {
+                // Check for exact match or significant overlap
+                const userWords = userSkill.split(/\s+/);
+                const skillWords = skill.split(/\s+/);
+                
+                // Check if any word from user skill matches any word from required skill
+                return userWords.some(uWord => 
+                    skillWords.some(sWord => 
+                        uWord.length > 2 && sWord.length > 2 && 
+                        (uWord.includes(sWord) || sWord.includes(uWord))
+                    )
+                );
+            })
+        );
+        
+        const matchPercentage = Math.round((matchedSkills.length / requiredSkills.length) * 100);
+        
+        return {
+            ...careerTrends[career],
+            career,
+            match: matchPercentage,
+            matchedSkills,
+            missingSkills: requiredSkills.filter(skill => !matchedSkills.includes(skill)),
+            trend: careerTrends[career].trend
+        };
+    });
+    
+    // Sort by best match
+    careerMatches.sort((a, b) => b.match - a.match);
+    
+    // Get top 3 careers
+    state.topCareers = careerMatches.slice(0, 3);
+    state.apiSource = 'fallback';
+    state.currentStep = 4;
+    render();
+}
+
+// Enhanced skill matching algorithm
+function calculateSkillMatch(userSkills, requiredSkills) {
+    const userSkillList = userSkills.split(',').map(skill => skill.trim().toLowerCase());
+    const requiredSkillList = requiredSkills.map(skill => skill.toLowerCase());
+    
+    let matchedCount = 0;
+    
+    for (const reqSkill of requiredSkillList) {
+        for (const userSkill of userSkillList) {
+            // More accurate matching with multiple techniques
+            if (
+                // Exact match
+                userSkill === reqSkill ||
+                // Contains match
+                userSkill.includes(reqSkill) || 
+                reqSkill.includes(userSkill) ||
+                // Similar words match (for common variations)
+                areSkillsSimilar(userSkill, reqSkill)
+            ) {
+                matchedCount++;
+                break;
+            }
+        }
+    }
+    
+    // Calculate match percentage with more weight on exact matches
+    const exactMatchPercentage = (matchedCount / requiredSkillList.length) * 100;
+    
+    // Apply a slight penalty for partial matches to ensure accuracy
+    return Math.min(95, Math.round(exactMatchPercentage * 0.95));
+}
+
+// Helper function to check if skills are similar
+function areSkillsSimilar(skill1, skill2) {
+    const commonVariations = {
+        'js': 'javascript',
+        'reactjs': 'react',
+        'nodejs': 'node.js',
+        'html5': 'html',
+        'css3': 'css',
+        'ml': 'machine learning',
+        'ai': 'artificial intelligence',
+        'dl': 'deep learning',
+        'ux': 'user experience',
+        'ui': 'user interface'
+    };
+    
+    // Check if either skill is a common variation of the other
+    if (commonVariations[skill1] === skill2 || commonVariations[skill2] === skill1) {
+        return true;
+    }
+    
+    // Check for other common patterns
+    const words1 = skill1.split(/\s+|_/);
+    const words2 = skill2.split(/\s+|_/);
+    
+    // Check if any words match between the two skills
+    return words1.some(word1 => words2.some(word2 => word1 === word2));
+}
+
+// Validate salary range format
+function validateSalaryRange(salary) {
+    // Ensure salary follows the expected format
+    if (typeof salary === 'string' && salary.includes('LPA')) {
+        return salary;
+    }
+    
+    // Default fallback
+    return "₹5-12 LPA";
+}
+
+// Generate PDF function
+function generatePDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    
+    // Add title
+    doc.setFontSize(22);
+    doc.setTextColor(67, 97, 238);
+    doc.text('CareerPath AI - Personalized Career Plan', 105, 20, { align: 'center' });
+    
+    // Add user information
+    doc.setFontSize(16);
+    doc.setTextColor(0, 0, 0);
+    doc.text(`Name: ${state.userData.name}`, 20, 40);
+    doc.text(`Email: ${state.userData.email}`, 20, 50);
+    doc.text(`Skills: ${state.userData.skills}`, 20, 60);
+    doc.text(`Interests: ${state.userData.interests.join(', ')}`, 20, 70);
+    doc.text(`Career Goals: ${state.userData.goals}`, 20, 80);
+    doc.text(`Salary Expectations: ${state.userData.salaryRange}`, 20, 90);
+    
+    // Add career recommendations
+    doc.setFontSize(18);
+    doc.setTextColor(67, 97, 238);
+    doc.text('Career Recommendations', 20, 110);
+    
+    let yPosition = 120;
+    state.topCareers.forEach((career, index) => {
+        if (yPosition > 250) {
+            doc.addPage();
+            yPosition = 20;
+        }
+        
+        doc.setFontSize(14);
+        doc.setTextColor(0, 0, 0);
+        doc.text(`${index + 1}. ${career.career} (${career.match}% Match)`, 20, yPosition);
+        
+        doc.setFontSize(10);
+        doc.text(`Salary: ${career.salary} | Demand: ${career.demand} | Growth: ${career.growth}`, 20, yPosition + 7);
+        doc.text(career.description, 20, yPosition + 14, { maxWidth: 170 });
+        
+        yPosition += 30;
+    });
+    
+    // Save the PDF
+    doc.save('CareerPath_AI_Report.pdf');
+}
+
+function restartProcess() {
+    state.currentStep = 1;
+    state.userData = {
+        name: '',
+        email: '',
+        skills: '',
+        experience: '',
+        employmentStatus: '',
+        interests: [],
+        goals: '',
+        constraints: '',
+        salaryRange: ''
+    };
+    state.results = null;
+    state.topCareers = [];
+    state.errors = {};
+    state.apiSource = null;
+    render();
+             }
