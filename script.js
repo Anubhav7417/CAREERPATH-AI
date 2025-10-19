@@ -1707,4 +1707,4 @@ function restartProcess() {
     state.errors = {};
     state.apiSource = null;
     render();
-    }
+}
