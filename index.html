@@ -10,9 +10,147 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <style>
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 20px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 600px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .dark .modal-content {
+            background-color: #374151;
+        }
+        .card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        .share-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 10px;
+        }
+        .share-button {
+            padding: 10px 15px;
+            border-radius: 8px;
+            color: white;
+            text-align: center;
+            cursor: pointer;
+            transition: opacity 0.3s;
+        }
+        .share-button:hover {
+            opacity: 0.9;
+        }
+        .whatsapp { background-color: #25D366; }
+        .telegram { background-color: #0088cc; }
+        .twitter { background-color: #1DA1F2; }
+        .linkedin { background-color: #0077B5; }
+        .facebook { background-color: #4267B2; }
+        .step-nav-btn {
+            width: 100%;
+            margin: 0 2px;
+        }
+        .progress-bar {
+            transition: width 0.5s ease;
+        }
+        .logo {
+            font-size: 2.5rem;
+            margin-right: 15px;
+            color: #3b82f6;
+        }
+        .auth-btn {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: 500;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .auth-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .google-btn {
+            background-color: #fff;
+            color: #757575;
+            border: 1px solid #dadce0;
+        }
+        .google-btn:hover {
+            background-color: #f8f9fa;
+        }
+        .phone-btn {
+            background-color: #4285f4;
+            color: white;
+            border: none;
+        }
+        .phone-btn:hover {
+            background-color: #3367d6;
+        }
+        .otp-section {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e5e7eb;
+        }
+        .dark .otp-section {
+            border-top: 1px solid #4b5563;
+        }
+    </style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-4">
+<body class="min-h-screen flex items-center justify-center p-4 bg-gray-50 dark:bg-gray-900">
+    <!-- Auth Modal -->
+    <div id="authModal" class="modal">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800 dark:text-white">Sign In / Sign Up</h2>
+                <button onclick="closeAuthModal()" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div class="space-y-4">
+                <!-- Google Auth -->
+                <button id="googleSignIn" class="auth-btn google-btn">
+                    <i class="fab fa-google mr-2"></i> Continue with Google
+                </button>
+                
+                <!-- Phone Auth -->
+                <div class="otp-section">
+                    <h3 class="font-medium mb-3 dark:text-white">Or sign in with phone</h3>
+                    <div class="space-y-3">
+                        <input type="tel" id="phoneNumber" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600" placeholder="+1234567890">
+                        <button id="sendOtp" class="auth-btn phone-btn">
+                            Send OTP
+                        </button>
+                        <div id="otpInput" class="hidden">
+                            <input type="text" id="otpCode" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600 mb-3" placeholder="Enter OTP">
+                            <button id="verifyOtp" class="auth-btn phone-btn">
+                                Verify OTP
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Career Details Modal -->
     <div id="careerModal" class="modal">
         <div class="modal-content">
@@ -26,10 +164,10 @@
             <!-- Step Navigation in Modal -->
             <div class="mb-6 bg-gray-100 dark:bg-gray-700 rounded-lg p-3">
                 <div class="flex justify-between">
-                    <button onclick="showStepInModal(1)" class="text-sm px-3 py-1 rounded ${state.currentModalStep === 1 ? 'bg-blue-600 text-white' : 'bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300'}">Skills</button>
-                    <button onclick="showStepInModal(2)" class="text-sm px-3 py-1 rounded ${state.currentModalStep === 2 ? 'bg-blue-600 text-white' : 'bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300'}">Interests</button>
-                    <button onclick="showStepInModal(3)" class="text-sm px-3 py-1 rounded ${state.currentModalStep === 3 ? 'bg-blue-600 text-white' : 'bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300'}">Goals</button>
-                    <button onclick="showStepInModal(4)" class="text-sm px-3 py-1 rounded ${state.currentModalStep === 4 ? 'bg-blue-600 text-white' : 'bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300'}">Results</button>
+                    <button onclick="showStepInModal(1)" class="text-sm px-3 py-1 rounded bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300">Skills</button>
+                    <button onclick="showStepInModal(2)" class="text-sm px-3 py-1 rounded bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300">Interests</button>
+                    <button onclick="showStepInModal(3)" class="text-sm px-3 py-1 rounded bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300">Goals</button>
+                    <button onclick="showStepInModal(4)" class="text-sm px-3 py-1 rounded bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300">Results</button>
                 </div>
             </div>
             
@@ -116,6 +254,9 @@
     <div class="container max-w-6xl mx-auto">
         <!-- Header -->
         <header class="text-center mb-8 flex items-center justify-center relative">
+            <button id="authButton" class="absolute top-0 left-0 bg-blue-600 text-white p-2 rounded-full" onclick="openAuthModal()">
+                <i class="fas fa-user"></i>
+            </button>
             <button id="themeToggle" class="absolute top-0 right-0 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white p-2 rounded-full">
                 <i class="fas fa-moon"></i>
             </button>
@@ -130,24 +271,37 @@
             </div>
         </header>
 
+        <!-- User Info (shown when logged in) -->
+        <div id="userInfo" class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 mb-6 hidden">
+            <div class="flex justify-between items-center">
+                <div>
+                    <p class="font-medium dark:text-white">Welcome, <span id="userName">User</span>!</p>
+                    <p class="text-sm text-gray-600 dark:text-gray-300" id="userEmail"></p>
+                </div>
+                <button onclick="signOut()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm">
+                    Sign Out
+                </button>
+            </div>
+        </div>
+
         <!-- Step Navigation -->
         <div class="mb-6 bg-white dark:bg-gray-800 rounded-lg shadow-md p-4">
             <div class="flex justify-between mb-2">
-                <button onclick="goToStep(1)" class="step-nav-btn ${state.currentStep === 1 ? 'active' : ''}">
-                    <div class="text-center p-2 ${state.currentStep === 1 ? 'bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-100' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'} rounded-lg">1. Skills</div>
+                <button onclick="goToStep(1)" class="step-nav-btn">
+                    <div class="text-center p-2 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-lg">1. Skills</div>
                 </button>
-                <button onclick="goToStep(2)" class="step-nav-btn ${state.currentStep === 2 ? 'active' : ''}">
-                    <div class="text-center p-2 ${state.currentStep === 2 ? 'bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-100' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'} rounded-lg">2. Interests</div>
+                <button onclick="goToStep(2)" class="step-nav-btn">
+                    <div class="text-center p-2 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-lg">2. Interests</div>
                 </button>
-                <button onclick="goToStep(3)" class="step-nav-btn ${state.currentStep === 3 ? 'active' : ''}">
-                    <div class="text-center p-2 ${state.currentStep === 3 ? 'bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-100' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'} rounded-lg">3. Goals</div>
+                <button onclick="goToStep(3)" class="step-nav-btn">
+                    <div class="text-center p-2 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-lg">3. Goals</div>
                 </button>
-                <button onclick="goToStep(4)" class="step-nav-btn ${state.currentStep === 4 ? 'active' : ''}">
-                    <div class="text-center p-2 ${state.currentStep === 4 ? 'bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-100' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'} rounded-lg">4. Results</div>
+                <button onclick="goToStep(4)" class="step-nav-btn">
+                    <div class="text-center p-2 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-lg">4. Results</div>
                 </button>
             </div>
             <div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
-                <div class="bg-blue-600 h-2.5 rounded-full progress-bar" style="width: ${(state.currentStep / 4) * 100}%"></div>
+                <div class="bg-blue-600 h-2.5 rounded-full progress-bar" style="width: 25%"></div>
             </div>
         </div>
 
