@@ -315,4 +315,4 @@ function getFallbackResponse(userData) {
   filteredCareers.sort((a, b) => b.match - a.match);
   
   return filteredCareers.slice(0, 3);
-          }
+}
