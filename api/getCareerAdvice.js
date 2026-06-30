@@ -28,13 +28,16 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Invalid JSON request structure' });
   }
 
+  let userData = {};
+  let sanitizedUserData;
+
   try {
-    const { userData } = req.body || {};
+    userData = (req.body && req.body.userData) || {};
     const geminiApiKey = process.env.GEMINI_API_KEY;
 
     if (!geminiApiKey) {
       console.warn("GEMINI_API_KEY environment variable is not configured. Falling back to static expert analysis.");
-      const fallbackCareers = getFallbackResponse(userData || {});
+      const fallbackCareers = getFallbackResponse(userData);
       return res.status(200).json({ careers: fallbackCareers });
     }
 
@@ -58,7 +61,7 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Missing required profile fields (name, skills, or career goals).' });
     }
 
-    const sanitizedUserData = {
+    sanitizedUserData = {
       name,
       skills,
       experience,
