@@ -4,6 +4,104 @@
 
 ---
 
+## Architecture
+
+CareerPath AI uses a modern, decoupled architecture designed to be light, secure, and easily deployable as a full Node.js app (on Render) or serverless functions (on Vercel).
+
+```
+┌────────────────────────────────────────────────────────┐
+│                      Client Browser                    │
+│   (index.html, script.js, Tailwind CSS, Chart.js)      │
+└──────────────────────────┬─────────────────────────────┘
+                           │ HTTP POST /api/getCareerAdvice
+                           ▼
+┌────────────────────────────────────────────────────────┐
+│                   Express Server (server.js)           │
+│   - Serves static assets                               │
+│   - Wraps serverless functions for Node.js runtimes    │
+└──────────────────────────┬─────────────────────────────┘
+                           │ Imports / Executes
+                           ▼
+┌────────────────────────────────────────────────────────┐
+│             Serverless Handler (getCareerAdvice.js)    │
+│   - Content-Type, HTTP method & request size checks   │
+│   - Input sanitization & security response headers     │
+└──────────────┬──────────────────────────┬──────────────┘
+               │                          │
+               │ HTTP API Request         │ libSQL Protocol
+               ▼                          ▼
+┌──────────────────────────┐    ┌────────────────────────┐
+│  Google Gemini AI API    │    │      Turso Database     │
+│   (gemini-2.0-flash)     │    │       (api/db.js)      │
+└──────────────────────────┘    └────────────────────────┘
+```
+
+- **Frontend (Presentation Layer)**: A clean, responsive dashboard designed with Tailwind CSS, supporting dark/light mode toggle, dynamic skill gap charts (Chart.js), PDF report generation (jsPDF), and multi-step form capture.
+- **Server Wrapper (Router/Hosting Layer)**: An Express.js instance serving static files and routing API traffic, rendering the app compatible with long-running Node platforms.
+- **API Handler (Controller/Validation Layer)**: A secure backend handler executing content verification, sanitizing payloads, requesting JSON-mode outputs from AI, and managing fallback operations.
+- **Database (Persistence Layer)**: A cloud SQLite database powered by Turso, storing user profiles and recommendations asynchronously using the `@libsql/client` wrapper.
+
+---
+
+## System Workflow
+
+The diagram below outlines the sequential lifecycle of a career recommendation query:
+
+```mermaid
+sequenceDiagram
+    actor User as User (Client Browser)
+    participant FE as Frontend (script.js)
+    participant Server as Express Server (server.js)
+    participant DB as Turso Database (api/db.js)
+    participant Gemini as Google Gemini AI API
+
+    User->>FE: Fill form & click "Generate Results"
+    FE->>FE: Perform Client-Side Validation
+    FE->>Server: POST /api/getCareerAdvice (JSON Payload)
+    activate Server
+    Server->>Server: Verify Method, Content-Type & Size Limit
+    Server->>Server: Sanitize Profile Input (XSS & Injection Protection)
+    Server->>DB: Initialize Database Client (initDb)
+    activate DB
+    DB-->>Server: Schema Ready / Client Connected
+    deactivate DB
+    
+    Server->>Gemini: POST /v1beta/models/gemini-2.0-flash (Header Auth)
+    activate Gemini
+    Gemini-->>Server: Return Career Recommendations (JSON Array)
+    deactivate Gemini
+
+    Server->>Server: Validate & Format Careers Data
+    
+    Server->>DB: Log Recommendation Async (insertRecommendation)
+    activate DB
+    DB-->>Server: Insert Success
+    deactivate DB
+    
+    Server-->>FE: HTTP 200 (JSON Careers Array)
+    deactivate Server
+    
+    FE->>FE: Calculate skill matches, generate roadmap & charts
+    FE->>User: Display Career Recommendations Dashboard
+```
+
+---
+
+## Detailed Working (How it Works)
+
+1. **Information Capture**: The user enters their profile (name, email, skills, experience, status, interests, goals, constraints, target salary) inside a 4-step wizard.
+2. **Client-Side Verification**: Before transmitting, the client ensures mandatory fields are populated, validates the email format, and checks that the user has selected at least one interest.
+3. **Security Screening**: The server checks that the payload is less than 20KB, strips any HTML/XML tags to prevent Cross-Site Scripting (XSS), filters control characters to prevent prompt injections, and validates that mandatory variables are present.
+4. **AI Generation (Structured Response)**:
+   - The backend constructs a structured prompt merging the user profile with specific formatting rules.
+   - It sends the request to the latest `gemini-2.0-flash` model.
+   - Using the `responseMimeType: "application/json"` parameter, the AI is forced to return a clean, structured JSON array of career objects containing: `"career"`, `"match"`, `"description"`, `"requiredSkills"`, `"missingSkills"`, `"salary"`, `"demand"`, `"growth"`, and `"trend"`.
+5. **Database Persistence**: Once recommendations are fetched and validated on the backend, the user's profile and results are logged asynchronously into the `career_recommendations` table on Turso, providing a persistent request history.
+6. **Graceful Fallback Mode**: If the Google Gemini API or Turso Database throws an error (e.g. rate limits or connection dropouts), the backend catches the error, falls back to a local rule-based expert matching algorithm, logs the event, and returns a valid set of career paths, ensuring the app remains online and usable.
+7. **Dashboard Rendering**: The client receives the career array, calculates exact skill match weights, dynamically plots skill gap progress bars using Chart.js, generates a 12-week weekly learning roadmap, and renders options to export the report as a PDF.
+
+---
+
 ## Features
 
 - 🤖 **AI-Powered Recommendations** — Get career suggestions powered by Google Gemini AI.
@@ -24,24 +122,6 @@
 - **Backend:** Express.js, Node.js (with Vercel Serverless compatibility)
 - **Database:** Turso (libSQL Cloud Database)
 - **AI:** Google Gemini (Generative Language API)
-
----
-
-## File Structure
-
-```
-careerpath-ai/
-├── index.html                # Main application dashboard
-├── style.css                 # Custom styling and animations
-├── script.js                 # Frontend application logic
-├── server.js                 # Express server wrapper (Render/Production)
-├── api/
-│   ├── db.js                 # Turso connection client and schema setup
-│   └── getCareerAdvice.js    # Gemini API caller & secure validation handler
-├── .env.example              # Template environment configuration
-├── package.json              # Project scripts and dependencies
-└── README.md                 # Project documentation
-```
 
 ---
 
@@ -86,17 +166,6 @@ TURSO_AUTH_TOKEN=your_auth_jwt_token_here
    ```
 
    Visit `http://localhost:3000` to test the application locally.
-
----
-
-## Security Features Implemented
-
-The application implements modern API security standards to prevent leakage and attack vectors:
-- **API Key Protection**: The Gemini API key is stored securely on the server and transmitted via the `x-goog-api-key` header instead of URL query strings to prevent logs exposure.
-- **Input Sanitization**: Cleanses all fields in user profiles to strip HTML tags (XSS protection) and control characters.
-- **Request Constraints**: Rejects non-POST methods, non-JSON content types, and limits payload size to 20KB to mitigate Denial of Service (DoS) attacks.
-- **Security Headers**: Standard secure response headers are injected into API responses (`X-Content-Type-Options`, `X-Frame-Options`, `X-XSS-Protection`, `Referrer-Policy`, and `Content-Security-Policy`).
-- **Graceful Fallbacks**: If the Gemini API or Turso Database is unavailable, the application logs the events and falls back to local expert static analysis to ensure uninterrupted uptime.
 
 ---
 
