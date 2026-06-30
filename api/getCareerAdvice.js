@@ -1,35 +1,96 @@
 // api/getCareerAdvice.js
+import { initDb, insertRecommendation } from './db.js';
 
 export default async function handler(req, res) {
+  // Set security response headers to secure endpoint behavior
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Content-Security-Policy', "default-src 'none'; frame-ancestors 'none'");
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  // Validate incoming content type to protect against CSRF and parser exploits
+  if (req.headers['content-type'] && !req.headers['content-type'].includes('application/json')) {
+    return res.status(400).json({ error: 'Content-Type must be application/json' });
+  }
+
+  // Request size limit validation (limit payload to ~20KB)
   try {
-    const { userData } = req.body;
+    const payloadString = JSON.stringify(req.body || {});
+    if (payloadString.length > 20000) {
+      return res.status(413).json({ error: 'Payload too large' });
+    }
+  } catch (e) {
+    return res.status(400).json({ error: 'Invalid JSON request structure' });
+  }
+
+  try {
+    const { userData } = req.body || {};
     const geminiApiKey = process.env.GEMINI_API_KEY;
 
-    if (!userData || !geminiApiKey) {
-      throw new Error('Missing user data or API key configuration.');
+    if (!geminiApiKey) {
+      console.warn("GEMINI_API_KEY environment variable is not configured. Falling back to static expert analysis.");
+      const fallbackCareers = getFallbackResponse(userData || {});
+      return res.status(200).json({ careers: fallbackCareers });
     }
 
-    const prompt = createPrompt(userData);
+    // Validate and sanitize userData structure
+    if (!userData || typeof userData !== 'object') {
+      return res.status(400).json({ error: 'Invalid or missing user data.' });
+    }
+
+    const name = sanitizeInput(userData.name, 100);
+    const skills = sanitizeInput(userData.skills, 300);
+    const experience = sanitizeInput(userData.experience, 50);
+    const employmentStatus = sanitizeInput(userData.employmentStatus, 50);
+    const interests = Array.isArray(userData.interests)
+      ? userData.interests.map(i => sanitizeInput(i, 50)).filter(Boolean)
+      : [];
+    const goals = sanitizeInput(userData.goals, 500);
+    const constraints = sanitizeInput(userData.constraints, 300);
+    const salaryRange = sanitizeInput(userData.salaryRange, 50);
+
+    if (!name || !skills || !goals) {
+      return res.status(400).json({ error: 'Missing required profile fields (name, skills, or career goals).' });
+    }
+
+    const sanitizedUserData = {
+      name,
+      skills,
+      experience,
+      employmentStatus,
+      interests,
+      goals,
+      constraints,
+      salaryRange
+    };
+
+    const prompt = createPrompt(sanitizedUserData);
 
     // Use the latest Gemini model
     const model = "gemini-2.0-flash";
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiApiKey}`;
+    // Security update: Key is omitted from URL query string
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
 
     console.log("Calling Gemini model:", model);
 
     const geminiResponse = await fetch(apiUrl, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'x-goog-api-key': geminiApiKey // Security update: API key is passed securely in header
+      },
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: {
           temperature: 0.2, // Lower temperature for more focused responses
           topP: 0.8,
           topK: 40,
+          responseMimeType: "application/json" // Use JSON mode for stable outputs
         }
       }),
     });
@@ -37,8 +98,7 @@ export default async function handler(req, res) {
     if (!geminiResponse.ok) {
       const bodyText = await geminiResponse.text();
       console.error(
-        `Gemini API responded with status: ${geminiResponse.status}`,
-        bodyText
+        `Gemini API responded with status: ${geminiResponse.status}`
       );
       throw new Error(`Gemini API call failed with ${geminiResponse.status}`);
     }
@@ -54,23 +114,60 @@ export default async function handler(req, res) {
         "Unexpected Gemini response shape:",
         JSON.stringify(geminiData)
       );
-      throw new Error("Invalid response format");
+      throw new Error("Invalid response format: empty text parts");
+    }
+
+    // Initialize database client schema if using Turso (handles cold starts)
+    try {
+      await initDb();
+    } catch (dbInitErr) {
+      console.error("Database initialization failed:", dbInitErr);
     }
 
     const careers = parseGeminiResponse(responseText);
     
     // Validate and enhance the careers data
-    const validatedCareers = validateCareerData(careers, userData);
+    const validatedCareers = validateCareerData(careers, sanitizedUserData);
+    
+    // Store recommendation in Turso database asynchronously
+    insertRecommendation(sanitizedUserData, validatedCareers).catch(dbWriteErr => {
+      console.error("Failed to write to Turso database asynchronously:", dbWriteErr);
+    });
     
     return res.status(200).json({ careers: validatedCareers });
   } catch (error) {
     console.error("Error in serverless function:", error?.message || error);
-    const fallbackCareers = getFallbackResponse(userData);
+    const fallbackUserData = typeof sanitizedUserData !== 'undefined' ? sanitizedUserData : (userData || {});
+    const fallbackCareers = getFallbackResponse(fallbackUserData);
+    
+    // Initialize database schema in fallback path if not already done
+    try {
+      await initDb();
+    } catch (dbInitErr) {
+      console.error("Database initialization in fallback path failed:", dbInitErr);
+    }
+
+    // Store fallback recommendation in Turso database asynchronously
+    insertRecommendation(fallbackUserData, fallbackCareers).catch(dbWriteErr => {
+      console.error("Failed to write fallback to Turso database asynchronously:", dbWriteErr);
+    });
+
     return res.status(200).json({ careers: fallbackCareers });
   }
 }
 
 // ----- helpers -----
+
+function sanitizeInput(val, maxLength = 500) {
+  if (typeof val !== 'string') return '';
+  // Strip HTML tags to prevent XSS / HTML injection attacks
+  let sanitized = val.replace(/<[^>]*>/g, '');
+  // Strip control characters to prevent prompt injection controls
+  sanitized = sanitized.replace(/[\x00-\x1F\x7F-\x9F]/g, '');
+  // Limit max length
+  sanitized = sanitized.substring(0, maxLength);
+  return sanitized.trim();
+}
 
 function createPrompt(userData) {
   return `
@@ -114,15 +211,20 @@ Provide only the JSON array with no additional text.
 
 function parseGeminiResponse(text) {
   try {
-    // Extract JSON from the response
-    const jsonMatch = text.match(/\[\s*{[\s\S]*}\s*\]/);
-    if (jsonMatch) {
-      return JSON.parse(jsonMatch[0]);
-    }
-    throw new Error("No JSON array found in response");
+    // Try to parse the text directly as JSON first
+    return JSON.parse(text.trim());
   } catch (err) {
-    console.error("Error parsing Gemini response:", err);
-    throw err;
+    try {
+      // Fallback: extract the JSON array via regex if markdown tags are present
+      const jsonMatch = text.match(/\[\s*{[\s\S]*}\s*\]/);
+      if (jsonMatch) {
+        return JSON.parse(jsonMatch[0]);
+      }
+      throw new Error("No JSON array found in response");
+    } catch (parseErr) {
+      console.error("Error parsing Gemini response:", parseErr);
+      throw parseErr;
+    }
   }
 }
 

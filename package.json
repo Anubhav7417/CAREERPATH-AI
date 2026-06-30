@@ -1,0 +1,27 @@
+{
+  "name": "careerpath-ai",
+  "version": "1.0.0",
+  "description": "An intelligent career guidance platform powered by Google Gemini AI",
+  "type": "module",
+  "main": "script.js",
+  "scripts": {
+    "dev": "node server.js",
+    "start": "node server.js"
+  },
+  "keywords": [
+    "career",
+    "ai",
+    "gemini",
+    "vercel"
+  ],
+  "author": "Team Neurix",
+  "license": "MIT",
+  "dependencies": {
+    "@libsql/client": "^0.17.4",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2"
+  },
+  "devDependencies": {
+    "vercel": "^39.0.0"
+  }
+}

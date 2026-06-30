@@ -1,0 +1,22 @@
+# Environment variables (contains sensitive secrets/keys)
+.env
+.env.local
+.env.*.local
+
+# Dependency directories
+node_modules/
+jspm_packages/
+web_modules/
+
+# Vercel output and configuration
+.vercel
+.vercel/
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS Files
+.DS_Store
+Thumbs.db
