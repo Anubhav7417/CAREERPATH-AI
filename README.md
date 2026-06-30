@@ -1,6 +1,6 @@
 # CareerPath AI
 
-**CareerPath AI** is an intelligent career guidance platform that uses Google's Gemini AI to provide personalized career recommendations based on your skills, interests, and goals, persisting recommendations securely in a Turso cloud database.
+**CareerPath AI** is an intelligent career guidance platform that uses Google's Gemini AI to provide personalized career recommendations based on your skills, interests, and goals, persisting recommendations securely in a Turso cloud database
 
 ---
 
